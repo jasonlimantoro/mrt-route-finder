@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"target": "es5",
+		"module": "commonjs",
+		"allowJs": true,
+		"strict": true,
+		"alwaysStrict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"moduleResolution": "node",
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"strictNullChecks": true,
+		"baseUrl": ".",
+		"paths": {
+			"@app/*": ["src/*"]
+		},
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true
+	},
+	"exclude": ["build/**", "jest.config.js"]
+}
