@@ -6,9 +6,6 @@ import { dijksta } from "./utils";
 @ObjectType()
 class RouteResponse {
 	@Field(() => [String!]!)
-	paths: string[];
-
-	@Field(() => [String!]!)
 	instructions: string[];
 
 	@Field(() => Int!)
@@ -23,14 +20,14 @@ export class RouteResolver {
 		@Arg("target") target: StationID,
 		@Arg("startTime", { nullable: true }) startTime: string
 	): Promise<RouteResponse> {
-		const { paths, duration, instructions } = dijksta(
+		const { duration, instructions } = dijksta(
 			mrtMap,
 			source,
 			target,
 			startTime
 		);
 		return {
-			paths,
+			// paths,
 			duration,
 			instructions,
 		};

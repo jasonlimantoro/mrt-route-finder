@@ -159,6 +159,8 @@ export class DTLine extends Line {
 }
 
 export class InterchangeLine extends Line {
+	info: string = "";
+
 	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
@@ -172,7 +174,10 @@ export class InterchangeLine extends Line {
 
 	compute_transfer_duration(currentTime: Date) {
 		if (isPeak(currentTime)) {
+			this.info = "Reason: peak time";
 			return 15;
+		} else {
+			this.info = "";
 		}
 		return 10;
 	}
@@ -206,33 +211,49 @@ export class LineFactory {
 export class LineQuery {
 	line;
 
-	usingTimeConsideration;
+	currentTime?: Date;
 
-	constructor(line: Line, usingTimeConsideration: boolean) {
+	constructor(line: Line, currentTime?: Date) {
 		this.line = line;
-		this.usingTimeConsideration = usingTimeConsideration;
+		this.currentTime = currentTime;
 	}
 
-	computeDuration: (currentTime?: Date) => number = (currentTime) => {
-		if (this.usingTimeConsideration) {
-			return this.line.computeDuration(currentTime!);
+	computeDuration() {
+		if (this.currentTime) {
+			return this.line.computeDuration(this.currentTime);
 		}
 		return 1;
-	};
+	}
 }
 
 export class InstructionLine {
-	line;
+	lineQuery;
 
-	constructor(line: Line) {
-		this.line = line;
+	constructor(lineQuery: LineQuery) {
+		this.lineQuery = lineQuery;
 	}
 
 	getInstruction = (): string => {
-		if (this.line instanceof InterchangeLine) {
-			return `Change to ${this.line.target.data.line}`;
+		if (this.lineQuery.currentTime) {
+			if (this.lineQuery.line instanceof InterchangeLine) {
+				return `[${this.lineQuery.currentTime.toLocaleTimeString()}] Change to ${
+					this.lineQuery.line.target.data.line
+				}. Waiting time: ${this.lineQuery.computeDuration()}, ${
+					this.lineQuery.line.info
+				}`;
+			} else {
+				return `[${this.lineQuery.currentTime.toLocaleTimeString()}] Take line ${
+					this.lineQuery.line.source.data.line
+				} from ${this.lineQuery.line.source.id} to ${
+					this.lineQuery.line.target.id
+				}. Travel time: ${this.lineQuery.computeDuration()}`;
+			}
 		} else {
-			return `Take line ${this.line.source.data.line} from station ${this.line.source.id} to ${this.line.target.id}`;
+			if (this.lineQuery.line instanceof InterchangeLine) {
+				return `Change to ${this.lineQuery.line.target.data.line}`;
+			} else {
+				return `Take line ${this.lineQuery.line.source.data.line} from ${this.lineQuery.line.source.id} to ${this.lineQuery.line.target.id}`;
+			}
 		}
 	};
 }

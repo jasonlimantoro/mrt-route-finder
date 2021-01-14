@@ -2,7 +2,7 @@ import { parse } from "@app/data/dataParser";
 import { Line, LineFactory } from "./line";
 import { Station, StationFactory } from "./station";
 import { MrtMap, StationID, StationType } from "./types";
-import { stationCodeToLineType } from "./utils";
+import { constructLineId, stationCodeToLineType } from "./utils";
 
 const createStations = async () => {
 	const data = await parse();
@@ -49,8 +49,8 @@ export const mrtMap: MrtMap = {
 		EW17: ["EW18", "EW16"],
 		EW16: ["EW17", "EW15"],
 		EW15: ["EW16", "EW14"],
-		EW14: ["EW15", "EW13"],
-		EW13: ["EW14", "EW12"],
+		EW14: ["EW15", "EW13", "NS26"],
+		EW13: ["EW14", "EW12", "NS25"],
 		EW12: ["EW13", "EW11"],
 		EW11: ["EW12", "EW10"],
 		EW10: ["EW11", "EW9"],
@@ -98,11 +98,6 @@ export const mrtMap: MrtMap = {
 		stations: {},
 		lines: {},
 	},
-};
-
-const constructLineId = (src: string, target: string) => {
-	const sorted = [src, target].sort();
-	return [sorted[0], "-", sorted[1]].join("");
 };
 
 (async () => {

@@ -1,4 +1,4 @@
-import { LineQuery } from "./line";
+import { InstructionLine, LineQuery } from "./line";
 import { MrtMap, StationID, StationType } from "./types";
 
 export const isPeak = (currentTime: Date) => {
@@ -27,8 +27,7 @@ const swap = <V>(arr: Array<V>, i: number, j: number) => {
 };
 
 export const constructLineId = (src: string, target: string) => {
-	const sorted = [src, target].sort();
-	return [sorted[0], "-", sorted[1]].join("");
+	return `${src}-${target}`;
 };
 
 type CompareFn<V> = (a: V, b: V) => boolean;
@@ -107,39 +106,30 @@ export default class Heap<V> {
 }
 
 const reconstructPath = (
-	cameFrom: { [key: string]: string },
+	cameFrom: { [key: string]: [string, LineQuery?] },
 	start: string,
 	end: string
 ) => {
-	const path: string[] = [];
+	const path: LineQuery[] = [];
 	let current = end;
 	while (current && current !== start) {
-		path.push(current);
-		current = cameFrom[current];
+		const [parent, lineQuery] = cameFrom[current];
+		current = parent;
+		if (lineQuery) {
+			path.push(lineQuery);
+		}
 	}
 	if (current) {
-		path.push(start);
 		return path.reverse();
 	}
 	return [];
 };
 
-const reconstructInstructions = (paths: string[]) => {
+const reconstructInstructions = (paths: LineQuery[]) => {
 	const instructions: string[] = [];
-	let i = 1;
-	while (i < paths.length) {
-		const sourceLineType = stationCodeToLineType(paths[i - 1]);
-		const targetLineType = stationCodeToLineType(paths[i]);
-		if (sourceLineType !== targetLineType) {
-			instructions.push(`Change to ${targetLineType}`);
-		} else {
-			instructions.push(
-				`Take line ${sourceLineType} from station ${paths[i - 1]} to ${
-					paths[i]
-				}`
-			);
-		}
-		i += 1;
+	for (const lineQuery of paths) {
+		const instructionLine = new InstructionLine(lineQuery);
+		instructions.push(instructionLine.getInstruction());
 	}
 
 	return instructions;
@@ -155,13 +145,14 @@ export const dijksta = (
 		[key: string]: number;
 	}>((accum, current) => ({ ...accum, [current]: Infinity }), {});
 	type Pair = [number, StationID, Date?];
+	const startTimeObject = startTime ? new Date(startTime) : undefined;
 	const pq = new Heap<Pair>(
-		[[0, start, startTime ? new Date(startTime) : undefined]],
+		[[0, start, startTimeObject]],
 		(a, b) => a[0] < b[0]
 	);
 	distances[start] = 0;
-	const cameFrom: { [key: string]: string } = {};
-	cameFrom[start] = start;
+	const cameFrom: { [key: string]: [string, LineQuery?] } = {};
+	cameFrom[start] = [start];
 
 	while (pq.length) {
 		const [distance, currentStation, currentTime] = pq.pop();
@@ -171,18 +162,17 @@ export const dijksta = (
 		for (const neighbor of map.routes[currentStation] || []) {
 			const lineId = constructLineId(currentStation, neighbor);
 			const line = map.entities.lines[lineId];
-			const queryLine = new LineQuery(line, !!startTime);
-			const cost = queryLine.computeDuration(currentTime);
+			const lineQuery = new LineQuery(line, currentTime);
+			const cost = lineQuery.computeDuration();
 			let newTime;
 			if (currentTime) {
-				newTime = new Date(
-					currentTime.setMinutes(currentTime.getMinutes() + cost)
-				);
+				newTime = new Date(currentTime);
+				newTime.setMinutes(newTime.getMinutes() + cost);
 			}
 			const newCost = distance + cost;
 
 			if (distances[neighbor] > newCost) {
-				cameFrom[neighbor] = currentStation;
+				cameFrom[neighbor] = [currentStation, lineQuery];
 				pq.push([newCost, neighbor as StationID, newTime]);
 				distances[neighbor] = newCost;
 			}
