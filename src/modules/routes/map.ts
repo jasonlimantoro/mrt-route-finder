@@ -20,7 +20,7 @@ const createStations = async () => {
 					id: stationCode as StationID,
 					name: stationName,
 					line: stationType,
-					openingDate,
+					openingDate: new Date(openingDate),
 				}),
 			};
 		},

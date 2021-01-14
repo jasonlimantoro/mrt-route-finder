@@ -181,7 +181,7 @@ export interface StationData {
 	id: StationID;
 	name: string;
 	line: StationType;
-	openingDate: string;
+	openingDate: Date;
 }
 
 export interface LineData {

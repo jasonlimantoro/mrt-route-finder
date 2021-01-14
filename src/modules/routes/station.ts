@@ -10,71 +10,57 @@ export abstract class Station {
 		this.data = data;
 	}
 
-	abstract isOperating: (currentTime: Date) => boolean;
+	hasOpened(currentTime: Date) {
+		return currentTime.getTime() - this.data.openingDate.getTime() > 0;
+	}
 }
 
 class EWStation extends Station {
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
-
-	isOperating = () => true;
 }
 
 class NSStation extends Station {
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
-
-	isOperating = () => true;
 }
 
 class CCStation extends Station {
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
-
-	isOperating = () => true;
 }
 
 class CGStation extends Station {
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
-
-	isOperating = () => true;
 }
 
 class NEStation extends Station {
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
-
-	isOperating = () => true;
 }
 
 class CEStation extends Station {
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
-
-	isOperating = () => true;
 }
 
 class TEStation extends Station {
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
-
-	isOperating = () => true;
 }
 
 class DTStation extends Station {
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
-
-	isOperating = () => true;
 }
 
 export class StationFactory {
