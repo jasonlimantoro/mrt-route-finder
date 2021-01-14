@@ -39,7 +39,7 @@ export const mrtMap: MrtMap = {
 		EW27: ["EW28", "EW26"],
 		EW26: ["EW27", "EW25"],
 		EW25: ["EW26", "EW24"],
-		EW24: ["EW25", "EW24", "NS1"],
+		EW24: ["EW25", "EW23", "NS1"],
 		EW23: ["EW24", "EW22"],
 		EW22: ["EW23", "EW21"],
 		EW21: ["EW22", "EW20"],
