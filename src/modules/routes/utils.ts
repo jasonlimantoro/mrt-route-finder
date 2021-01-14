@@ -172,7 +172,7 @@ export const dijksta = (
 			const lineId = constructLineId(currentStation, neighbor);
 			const line = map.entities.lines[lineId];
 			const queryLine = new LineQuery(line, !!startTime);
-			const cost = queryLine.compute_duration(currentTime);
+			const cost = queryLine.computeDuration(currentTime);
 			let newTime;
 			if (currentTime) {
 				newTime = new Date(

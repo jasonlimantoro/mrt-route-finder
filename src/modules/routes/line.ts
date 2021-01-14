@@ -1,4 +1,5 @@
-import { StationID, StationType } from "./types";
+import { Station } from "./station";
+import { StationType } from "./types";
 import { isNight, isPeak, stationCodeToLineType } from "./utils";
 
 export abstract class Line {
@@ -8,30 +9,35 @@ export abstract class Line {
 
 	target;
 
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		this.id = id;
 		this.source = source;
 		this.target = target;
 	}
 
-	abstract compute_duration(currentTime: Date): number;
+	abstract computeDuration(currentTime: Date): number;
+	abstract isOperating(currentTime: Date): boolean;
 }
 
 export class EWLine extends Line {
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
 
-	compute_duration(_currentTime: Date): number {
+	computeDuration(_currentTime: Date): number {
 		return 10;
+	}
+
+	isOperating(_currentTime: Date): boolean {
+		return true;
 	}
 }
 
 export class NSLine extends Line {
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	compute_duration(currentTime: Date): number {
+	computeDuration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -39,14 +45,17 @@ export class NSLine extends Line {
 		} else {
 			return 10;
 		}
+	}
+	isOperating(_currentTime: Date): boolean {
+		return true;
 	}
 }
 
 export class CCLine extends Line {
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	compute_duration(currentTime: Date): number {
+	computeDuration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -54,14 +63,18 @@ export class CCLine extends Line {
 		} else {
 			return 10;
 		}
+	}
+
+	isOperating(_currentTime: Date): boolean {
+		return true;
 	}
 }
 
 export class CGLine extends Line {
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	compute_duration(currentTime: Date): number {
+	computeDuration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -69,14 +82,18 @@ export class CGLine extends Line {
 		} else {
 			return 10;
 		}
+	}
+
+	isOperating(currentTime: Date): boolean {
+		return !isNight(currentTime);
 	}
 }
 
 export class NELine extends Line {
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	compute_duration(currentTime: Date): number {
+	computeDuration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -84,14 +101,17 @@ export class NELine extends Line {
 		} else {
 			return 10;
 		}
+	}
+	isOperating(_currentTime: Date): boolean {
+		return true;
 	}
 }
 
 export class CELine extends Line {
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	compute_duration(currentTime: Date): number {
+	computeDuration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -99,61 +119,71 @@ export class CELine extends Line {
 		} else {
 			return 10;
 		}
+	}
+
+	isOperating(currentTime: Date): boolean {
+		return !isNight(currentTime);
 	}
 }
 
 export class TELine extends Line {
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	compute_duration(currentTime: Date): number {
-		if (isPeak(currentTime)) {
-			return 12;
-		} else if (isNight(currentTime)) {
-			return 10;
+	computeDuration(currentTime: Date): number {
+		if (isNight(currentTime) || !isPeak(currentTime)) {
+			return 8;
 		} else {
 			return 10;
 		}
+	}
+	isOperating(_currentTime: Date): boolean {
+		return true;
 	}
 }
 
 export class DTLine extends Line {
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	compute_duration(currentTime: Date): number {
-		if (isPeak(currentTime)) {
-			return 12;
-		} else if (isNight(currentTime)) {
-			return 10;
-		} else {
-			return 10;
+	computeDuration(currentTime: Date): number {
+		if (!isPeak(currentTime)) {
+			return 8;
 		}
+		return 10;
+	}
+
+	isOperating(currentTime: Date): boolean {
+		return !isNight(currentTime);
 	}
 }
 
 export class InterchangeLine extends Line {
-	constructor(id: string, source: StationID, target: StationID) {
+	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	compute_duration = (currentTime: Date) => {
+	computeDuration(currentTime: Date) {
 		return this.compute_transfer_duration(currentTime);
-	};
+	}
 
-	compute_transfer_duration = (currentTime: Date) => {
+	isOperating(_currentTime: Date): boolean {
+		return true;
+	}
+
+	compute_transfer_duration(currentTime: Date) {
 		if (isPeak(currentTime)) {
 			return 15;
 		}
 		return 10;
-	};
+	}
 }
 
 export class LineFactory {
 	static create = (
 		type: StationType,
 		id: string,
-		source: StationID,
-		target: StationID
+		source: Station,
+		target: Station
 	) => {
 		const typeToClass = {
 			EW: EWLine,
@@ -165,7 +195,7 @@ export class LineFactory {
 			TE: TELine,
 			DT: DTLine,
 		};
-		if (stationCodeToLineType(source) !== stationCodeToLineType(target)) {
+		if (stationCodeToLineType(source.id) !== stationCodeToLineType(target.id)) {
 			return new InterchangeLine(id, source, target);
 		}
 
@@ -183,10 +213,26 @@ export class LineQuery {
 		this.usingTimeConsideration = usingTimeConsideration;
 	}
 
-	compute_duration: (currentTime?: Date) => number = (currentTime) => {
+	computeDuration: (currentTime?: Date) => number = (currentTime) => {
 		if (this.usingTimeConsideration) {
-			return this.line.compute_duration(currentTime!);
+			return this.line.computeDuration(currentTime!);
 		}
 		return 1;
+	};
+}
+
+export class InstructionLine {
+	line;
+
+	constructor(line: Line) {
+		this.line = line;
+	}
+
+	getInstruction = (): string => {
+		if (this.line instanceof InterchangeLine) {
+			return `Change to ${this.line.target.data.line}`;
+		} else {
+			return `Take line ${this.line.source.data.line} from station ${this.line.source.id} to ${this.line.target.id}`;
+		}
 	};
 }

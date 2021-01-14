@@ -116,8 +116,8 @@ const constructLineId = (src: string, target: string) => {
 			const line = LineFactory.create(
 				stationType,
 				lineId,
-				sourceId as StationID,
-				targetId as StationID
+				stations[sourceId],
+				stations[targetId]
 			);
 			lines[lineId] = line;
 		}
