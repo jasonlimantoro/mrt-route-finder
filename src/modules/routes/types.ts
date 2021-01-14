@@ -1,3 +1,5 @@
+import { Line } from "./line";
+
 export type StationType = "NS" | "EW" | "CC" | "CG" | "NE" | "CE" | "TE" | "DT";
 export type StationID =
 	| "NS1"
@@ -192,7 +194,7 @@ type StationMapping = {
 };
 
 type LineMapping = {
-	[key: string]: LineData;
+	[key: string]: Line;
 };
 
 export interface MrtMap {

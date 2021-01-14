@@ -14,7 +14,7 @@ export abstract class Line {
 		this.target = target;
 	}
 
-	abstract compute_travel_duration(currentTime: Date): number;
+	abstract compute_duration(currentTime: Date): number;
 }
 
 export class EWLine extends Line {
@@ -22,7 +22,7 @@ export class EWLine extends Line {
 		super(id, source, target);
 	}
 
-	compute_travel_duration(_currentTime: Date): number {
+	compute_duration(_currentTime: Date): number {
 		return 10;
 	}
 }
@@ -31,7 +31,7 @@ export class NSLine extends Line {
 	constructor(id: string, source: StationID, target: StationID) {
 		super(id, source, target);
 	}
-	compute_travel_duration(currentTime: Date): number {
+	compute_duration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -46,7 +46,7 @@ export class CCLine extends Line {
 	constructor(id: string, source: StationID, target: StationID) {
 		super(id, source, target);
 	}
-	compute_travel_duration(currentTime: Date): number {
+	compute_duration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -61,7 +61,7 @@ export class CGLine extends Line {
 	constructor(id: string, source: StationID, target: StationID) {
 		super(id, source, target);
 	}
-	compute_travel_duration(currentTime: Date): number {
+	compute_duration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -76,7 +76,7 @@ export class NELine extends Line {
 	constructor(id: string, source: StationID, target: StationID) {
 		super(id, source, target);
 	}
-	compute_travel_duration(currentTime: Date): number {
+	compute_duration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -91,7 +91,7 @@ export class CELine extends Line {
 	constructor(id: string, source: StationID, target: StationID) {
 		super(id, source, target);
 	}
-	compute_travel_duration(currentTime: Date): number {
+	compute_duration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -106,7 +106,7 @@ export class TELine extends Line {
 	constructor(id: string, source: StationID, target: StationID) {
 		super(id, source, target);
 	}
-	compute_travel_duration(currentTime: Date): number {
+	compute_duration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -121,7 +121,7 @@ export class DTLine extends Line {
 	constructor(id: string, source: StationID, target: StationID) {
 		super(id, source, target);
 	}
-	compute_travel_duration(currentTime: Date): number {
+	compute_duration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
 		} else if (isNight(currentTime)) {
@@ -136,8 +136,8 @@ export class InterchangeLine extends Line {
 	constructor(id: string, source: StationID, target: StationID) {
 		super(id, source, target);
 	}
-	compute_travel_duration = () => {
-		return 0;
+	compute_duration = (currentTime: Date) => {
+		return this.compute_transfer_duration(currentTime);
 	};
 
 	compute_transfer_duration = (currentTime: Date) => {
@@ -170,5 +170,23 @@ export class LineFactory {
 		}
 
 		return new typeToClass[type](id, source, target);
+	};
+}
+
+export class LineQuery {
+	line;
+
+	usingTimeConsideration;
+
+	constructor(line: Line, usingTimeConsideration: boolean) {
+		this.line = line;
+		this.usingTimeConsideration = usingTimeConsideration;
+	}
+
+	compute_duration: (currentTime?: Date) => number = (currentTime) => {
+		if (this.usingTimeConsideration) {
+			return this.line.compute_duration(currentTime!);
+		}
+		return 1;
 	};
 }
