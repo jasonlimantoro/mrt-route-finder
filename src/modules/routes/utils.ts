@@ -124,6 +124,27 @@ const reconstructPath = (
 	return [];
 };
 
+const reconstructInstructions = (paths: string[]) => {
+	const instructions: string[] = [];
+	let i = 1;
+	while (i < paths.length) {
+		const sourceLineType = stationCodeToLineType(paths[i - 1]);
+		const targetLineType = stationCodeToLineType(paths[i]);
+		if (sourceLineType !== targetLineType) {
+			instructions.push(`Change to ${targetLineType}`);
+		} else {
+			instructions.push(
+				`Take line ${sourceLineType} from station ${paths[i - 1]} to ${
+					paths[i]
+				}`
+			);
+		}
+		i += 1;
+	}
+
+	return instructions;
+};
+
 export const dijksta = (
 	map: MrtMap,
 	start: StationID,
@@ -169,5 +190,6 @@ export const dijksta = (
 	}
 	const duration = distances[end];
 	const paths = reconstructPath(cameFrom, start, end);
-	return { paths, duration };
+	const instructions = reconstructInstructions(paths);
+	return { paths, duration, instructions };
 };

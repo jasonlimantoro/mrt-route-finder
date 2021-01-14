@@ -8,6 +8,9 @@ class RouteResponse {
 	@Field(() => [String!]!)
 	paths: string[];
 
+	@Field(() => [String!]!)
+	instructions: string[];
+
 	@Field(() => Int!)
 	duration: number;
 }
@@ -20,10 +23,16 @@ export class RouteResolver {
 		@Arg("target") target: StationID,
 		@Arg("startTime", { nullable: true }) startTime: string
 	): Promise<RouteResponse> {
-		const { paths, duration } = dijksta(mrtMap, source, target, startTime);
+		const { paths, duration, instructions } = dijksta(
+			mrtMap,
+			source,
+			target,
+			startTime
+		);
 		return {
 			paths,
 			duration,
+			instructions,
 		};
 	}
 }
