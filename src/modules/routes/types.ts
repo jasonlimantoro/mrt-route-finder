@@ -225,7 +225,7 @@ export class Instruction {
 }
 
 @ObjectType()
-class Route {
+export class Route {
 	@Field(() => [Instruction!]!)
 	instructions: Instruction[];
 
@@ -235,9 +235,6 @@ class Route {
 
 @ObjectType()
 export class RouteResponse {
-	@Field(() => Route)
-	topRoute: Route;
-
-	@Field(() => [Route!]!)
-	alternativeRoutes: Route[];
+	@Field(() => [Route]!)
+	allRoutes: Route[];
 }

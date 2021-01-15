@@ -1,6 +1,6 @@
-import { Arg, Query, Resolver } from "type-graphql";
+import { Arg, FieldResolver, Int, Query, Resolver, Root } from "type-graphql";
 import { mrtMap } from "./map";
-import { RouteResponse, StationID } from "./types";
+import { RouteResponse, StationID, Route } from "./types";
 import { dijkstra2 } from "./utils";
 
 @Resolver(() => RouteResponse)
@@ -18,8 +18,19 @@ export class RouteResolver {
 			startTime
 		);
 		return {
-			alternativeRoutes: allPossiblePathsWithInstructions.slice(1),
-			topRoute: allPossiblePathsWithInstructions[0],
+			allRoutes: allPossiblePathsWithInstructions,
 		};
+	}
+	@FieldResolver(() => Route)
+	topRoute(@Root() routeResponse: RouteResponse) {
+		return routeResponse.allRoutes[0];
+	}
+
+	@FieldResolver(() => [Route]!)
+	alternativeRoutes(
+		@Root() routeResponse: RouteResponse,
+		@Arg("take", () => Int, { defaultValue: 2 }) take: number
+	) {
+		return routeResponse.allRoutes.slice(1, take + 1);
 	}
 }
