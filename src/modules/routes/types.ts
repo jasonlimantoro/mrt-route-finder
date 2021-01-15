@@ -197,10 +197,14 @@ type LineMapping = {
 	[key: string]: Line;
 };
 
+type InterChangeMapping = {
+	[key in StationID]?: StationID;
+};
 export interface MrtMap {
 	routes: Routes;
 	entities: {
 		stations: StationMapping;
 		lines: LineMapping;
+		interchanges: InterChangeMapping;
 	};
 }

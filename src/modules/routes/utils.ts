@@ -1,4 +1,5 @@
-import { InstructionLine, InterchangeLine, LineQuery } from "./line";
+import { InstructionLine, LineQuery } from "./line";
+import { mrtMap } from "./map";
 import { MrtMap, StationID, StationType } from "./types";
 
 export const isPeak = (currentTime: Date) => {
@@ -192,9 +193,6 @@ export const dijkstra2 = (
 	end: StationID,
 	startTime?: string
 ) => {
-	const distances = Object.keys(map.entities.stations).reduce<{
-		[key: string]: number;
-	}>((accum, current) => ({ ...accum, [current]: Infinity }), {});
 	type Pair = [number, StationID, LineQuery[], Date?];
 	interface Path {
 		routes: LineQuery[];
@@ -205,7 +203,6 @@ export const dijkstra2 = (
 		[[0, start, [], startTimeObject]],
 		(a, b) => a[0] < b[0]
 	);
-	distances[start] = 0;
 	const allPossiblePaths: Path[] = [];
 
 	const isVisited = (station: string, paths: LineQuery[]) => {
@@ -217,10 +214,27 @@ export const dijkstra2 = (
 		return false;
 	};
 
+	const find = (x: StationID) => {
+		let i = x;
+		const { interchanges } = mrtMap.entities;
+		while (interchanges[i] !== i) {
+			i = interchanges[i] as StationID;
+		}
+		return i;
+	};
+
+	const connected = (x: StationID, y: StationID) => {
+		const { interchanges } = mrtMap.entities;
+		if (!interchanges[x] || !interchanges[y]) return false;
+		const root1 = find(x);
+		const root2 = find(y);
+		return root1 === root2;
+	};
+
 	while (pq.length) {
 		const [distance, currentStation, pathsSoFar, currentTime] = pq.pop();
-		if (currentStation === end) {
-			allPossiblePaths.push({ routes: pathsSoFar, duration: distances[end] });
+		if (currentStation === end || connected(currentStation, end)) {
+			allPossiblePaths.push({ routes: pathsSoFar, duration: distance });
 			continue;
 		}
 		if (allPossiblePaths.length >= 5) {
@@ -236,17 +250,8 @@ export const dijkstra2 = (
 				newTime = new Date(currentTime);
 				newTime.setMinutes(newTime.getMinutes() + cost);
 			}
-			// TODO: use connectivity instead of checking just one edge
-			if (line instanceof InterchangeLine && neighbor === end) {
-				allPossiblePaths.push({
-					routes: pathsSoFar,
-					duration: distance,
-				});
-				break;
-			}
-			const newCost = distance + cost;
-			distances[neighbor] = newCost;
 			if (!isVisited(neighbor, pathsSoFar)) {
+				const newCost = distance + cost;
 				pq.push([
 					newCost,
 					neighbor as StationID,

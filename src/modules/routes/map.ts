@@ -177,6 +177,11 @@ export const mrtMap: MrtMap = {
 	entities: {
 		stations: {},
 		lines: {},
+		interchanges: {
+			CC1: "NS24",
+			NE6: "NS24",
+			NS24: "NS24",
+		},
 	},
 };
 
