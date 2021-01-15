@@ -175,7 +175,7 @@ export const mrtMap: MrtMap = {
 		NE16: ["NE17", "NE15"],
 		NE17: ["NE16"],
 		TE1: ["TE2"],
-		TE2: ["TE1", "NS9"],
+		TE2: ["TE3", "TE1", "NS9"],
 		TE3: ["TE4", "TE2"],
 		TE4: ["TE5", "TE3"],
 		TE5: ["TE6", "TE4"],
