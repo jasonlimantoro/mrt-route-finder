@@ -185,8 +185,6 @@ export const dijksta = (
 	return { paths, duration, instructions };
 };
 
-// multiple shortest-path: EW15 -> NE6
-// TODO: logic if a station is an interchange should not be based on the code, should be based on the color
 export const dijkstra2 = (
 	map: MrtMap,
 	start: StationID,
@@ -246,17 +244,22 @@ export const dijkstra2 = (
 			const line = map.entities.lines[lineId];
 			const lineQuery = new LineQuery(line, currentTime);
 			const cost = lineQuery.computeDuration();
-			let newTime;
-			if (currentTime) {
-				newTime = new Date(currentTime);
-				newTime.setMinutes(newTime.getMinutes() + cost);
-			}
 			// Don't wait two times consecutively in station interchanges like Dhoby Ghout
 			if (
 				lastLineQuery?.line instanceof InterchangeLine &&
 				lineQuery.line instanceof InterchangeLine
 			) {
 				continue;
+			}
+
+			if (!lineQuery.hasTargetOpened()) {
+				continue;
+			}
+
+			let newTime;
+			if (currentTime) {
+				newTime = new Date(currentTime);
+				newTime.setMinutes(newTime.getMinutes() + cost);
 			}
 			if (!isVisited(neighbor, pathsSoFar)) {
 				const newCost = distance + cost;

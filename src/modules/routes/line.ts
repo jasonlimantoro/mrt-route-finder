@@ -219,6 +219,13 @@ export class LineQuery {
 		}
 		return 1;
 	}
+
+	hasTargetOpened() {
+		if (this.currentTime) {
+			return this.line.target.hasOpened(this.currentTime);
+		}
+		return true;
+	}
 }
 
 export class InstructionLine {
