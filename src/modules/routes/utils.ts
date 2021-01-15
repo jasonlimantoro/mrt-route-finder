@@ -1,6 +1,6 @@
 import { InstructionLine, InterchangeLine, LineQuery } from "./line";
 import { mrtMap } from "./map";
-import { MrtMap, StationID, StationType } from "./types";
+import { Instruction, MrtMap, StationID, StationType } from "./types";
 
 export const isPeak = (currentTime: Date) => {
 	const dayNumber = currentTime.getDay();
@@ -127,7 +127,7 @@ const reconstructPath = (
 };
 
 const reconstructInstructions = (paths: LineQuery[]) => {
-	const instructions: string[] = [];
+	const instructions: Instruction[] = [];
 	for (const lineQuery of paths) {
 		const instructionLine = new InstructionLine(lineQuery);
 		instructions.push(instructionLine.getInstruction());

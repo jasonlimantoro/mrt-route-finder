@@ -1,29 +1,11 @@
-import { Arg, Field, Int, ObjectType, Query, Resolver } from "type-graphql";
+import { Arg, Query, Resolver } from "type-graphql";
 import { mrtMap } from "./map";
-import { StationID } from "./types";
+import { RouteResponse, StationID } from "./types";
 import { dijkstra2 } from "./utils";
 
-@ObjectType()
-class Route {
-	@Field(() => [String!]!)
-	instructions: string[];
-
-	@Field(() => Int!)
-	duration: number;
-}
-
-@ObjectType()
-class RouteResponse {
-	@Field(() => [Route!]!)
-	alternativeRoutes: Route[];
-
-	@Field(() => Route)
-	topRoute: Route;
-}
-
-@Resolver()
+@Resolver(() => RouteResponse)
 export class RouteResolver {
-	@Query(() => RouteResponse!)
+	@Query(() => RouteResponse)
 	async route(
 		@Arg("source") source: StationID,
 		@Arg("target") target: StationID,

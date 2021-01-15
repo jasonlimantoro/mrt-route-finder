@@ -1,3 +1,4 @@
+import { Field, Int, ObjectType } from "type-graphql";
 import { Line } from "./line";
 
 export type StationType = "NS" | "EW" | "CC" | "CG" | "NE" | "CE" | "TE" | "DT";
@@ -207,4 +208,39 @@ export interface MrtMap {
 		lines: LineMapping;
 		interchanges: InterChangeMapping;
 	};
+}
+
+@ObjectType()
+class InstructionMeta {
+	@Field(() => String, { nullable: true })
+	time?: string;
+
+	@Field(() => Int)
+	cost: number;
+}
+@ObjectType()
+export class Instruction {
+	@Field(() => String)
+	text: string;
+
+	@Field(() => InstructionMeta)
+	meta: InstructionMeta;
+}
+
+@ObjectType()
+class Route {
+	@Field(() => [Instruction!]!)
+	instructions: Instruction[];
+
+	@Field(() => Int!)
+	duration: number;
+}
+
+@ObjectType()
+export class RouteResponse {
+	@Field(() => Route)
+	topRoute: Route;
+
+	@Field(() => [Route!]!)
+	alternativeRoutes: Route[];
 }

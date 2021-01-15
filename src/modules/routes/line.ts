@@ -1,5 +1,5 @@
 import { Station } from "./station";
-import { StationType } from "./types";
+import { Instruction, StationType } from "./types";
 import { isNight, isPeak, stationCodeToLineType } from "./utils";
 
 export abstract class Line {
@@ -228,25 +228,22 @@ export class InstructionLine {
 		this.lineQuery = lineQuery;
 	}
 
-	getInstruction = (): string => {
-		if (this.lineQuery.currentTime) {
-			if (this.lineQuery.line instanceof InterchangeLine) {
-				return `[${this.lineQuery.currentTime.toLocaleTimeString()}] Change to ${
-					this.lineQuery.line.target.data.line
-				}. Waiting time: ${this.lineQuery.computeDuration()}`;
-			} else {
-				return `[${this.lineQuery.currentTime.toLocaleTimeString()}] Take line ${
-					this.lineQuery.line.source.data.line
-				} from ${this.lineQuery.line.source.id} to ${
-					this.lineQuery.line.target.id
-				}. Travel time: ${this.lineQuery.computeDuration()}`;
-			}
+	getInstruction = (): Instruction => {
+		const { line } = this.lineQuery;
+		const meta = {
+			time: this.lineQuery.currentTime?.toLocaleTimeString(),
+			cost: this.lineQuery.computeDuration(),
+		};
+		if (this.lineQuery.line instanceof InterchangeLine) {
+			return {
+				text: `Change to ${line.target.data.line}`,
+				meta,
+			};
 		} else {
-			if (this.lineQuery.line instanceof InterchangeLine) {
-				return `Change to ${this.lineQuery.line.target.data.line}`;
-			} else {
-				return `Take line ${this.lineQuery.line.source.data.line} from ${this.lineQuery.line.source.id} to ${this.lineQuery.line.target.id}`;
-			}
+			return {
+				text: `Take line ${line.source.data.line} from ${line.source.id} to ${line.target.id}`,
+				meta,
+			};
 		}
 	};
 }
