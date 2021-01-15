@@ -1,6 +1,6 @@
 import { Station } from "./station";
 import { Instruction, StationType } from "./types";
-import { isNight, isPeak, stationCodeToLineType } from "./utils";
+import { isNight, isPeak } from "./utils";
 
 export abstract class Line {
 	id;
@@ -195,7 +195,7 @@ export class LineFactory {
 			TE: TELine,
 			DT: DTLine,
 		};
-		if (stationCodeToLineType(source.id) !== stationCodeToLineType(target.id)) {
+		if (source.color !== target.color) {
 			return new InterchangeLine(id, source, target);
 		}
 

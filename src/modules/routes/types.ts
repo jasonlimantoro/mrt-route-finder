@@ -1,6 +1,7 @@
 import { Field, Int, ObjectType } from "type-graphql";
 import { Line } from "./line";
 
+export type Color = "red" | "green" | "yellow" | "blue" | "purple" | "brown";
 export type StationType = "NS" | "EW" | "CC" | "CG" | "NE" | "CE" | "TE" | "DT";
 export type StationID =
 	| "NS1"
@@ -175,7 +176,7 @@ type LinkID = string;
 type Connection = LinkID;
 
 type Routes = {
-	[K in StationID]?: Connection[];
+	[K in StationID]: Connection[];
 };
 
 export interface StationData {

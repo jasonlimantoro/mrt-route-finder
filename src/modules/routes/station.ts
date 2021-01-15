@@ -1,9 +1,11 @@
-import { StationData, StationType } from "./types";
+import { Color, StationData, StationType } from "./types";
 
 export abstract class Station {
 	id;
 
 	data;
+
+	color: Color;
 
 	constructor(id: string, data: StationData) {
 		this.id = id;
@@ -16,48 +18,56 @@ export abstract class Station {
 }
 
 class EWStation extends Station {
+	color = "green" as const;
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
 }
 
 class NSStation extends Station {
+	color = "red" as const;
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
 }
 
 class CCStation extends Station {
+	color = "yellow" as const;
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
 }
 
 class CGStation extends Station {
+	color = "green" as const;
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
 }
 
 class NEStation extends Station {
+	color = "purple" as const;
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
 }
 
 class CEStation extends Station {
+	color = "yellow" as const;
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
 }
 
 class TEStation extends Station {
+	color = "brown" as const;
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
 }
 
 class DTStation extends Station {
+	color = "blue" as const;
 	constructor(id: string, data: StationData) {
 		super(id, data);
 	}
