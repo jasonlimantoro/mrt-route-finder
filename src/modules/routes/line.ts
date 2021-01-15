@@ -159,8 +159,6 @@ export class DTLine extends Line {
 }
 
 export class InterchangeLine extends Line {
-	info: string = "";
-
 	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
@@ -174,10 +172,7 @@ export class InterchangeLine extends Line {
 
 	compute_transfer_duration(currentTime: Date) {
 		if (isPeak(currentTime)) {
-			this.info = "Reason: peak time";
 			return 15;
-		} else {
-			this.info = "";
 		}
 		return 10;
 	}
@@ -238,9 +233,7 @@ export class InstructionLine {
 			if (this.lineQuery.line instanceof InterchangeLine) {
 				return `[${this.lineQuery.currentTime.toLocaleTimeString()}] Change to ${
 					this.lineQuery.line.target.data.line
-				}. Waiting time: ${this.lineQuery.computeDuration()}, ${
-					this.lineQuery.line.info
-				}`;
+				}. Waiting time: ${this.lineQuery.computeDuration()}`;
 			} else {
 				return `[${this.lineQuery.currentTime.toLocaleTimeString()}] Take line ${
 					this.lineQuery.line.source.data.line
