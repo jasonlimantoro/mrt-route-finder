@@ -1,4 +1,4 @@
-import { InstructionLine, LineQuery } from "./line";
+import { InstructionLine, InterchangeLine, LineQuery } from "./line";
 import { mrtMap } from "./map";
 import { MrtMap, StationID, StationType } from "./types";
 
@@ -240,6 +240,7 @@ export const dijkstra2 = (
 		if (allPossiblePaths.length >= 5) {
 			break;
 		}
+		const lastLineQuery = pathsSoFar[pathsSoFar.length - 1];
 		for (const neighbor of map.routes[currentStation] || []) {
 			const lineId = constructLineId(currentStation, neighbor);
 			const line = map.entities.lines[lineId];
@@ -249,6 +250,13 @@ export const dijkstra2 = (
 			if (currentTime) {
 				newTime = new Date(currentTime);
 				newTime.setMinutes(newTime.getMinutes() + cost);
+			}
+			// Don't wait two times consecutively in station interchanges like Dhoby Ghout
+			if (
+				lastLineQuery?.line instanceof InterchangeLine &&
+				lineQuery.line instanceof InterchangeLine
+			) {
+				continue;
 			}
 			if (!isVisited(neighbor, pathsSoFar)) {
 				const newCost = distance + cost;
