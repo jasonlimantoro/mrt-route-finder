@@ -1,4 +1,4 @@
-import { InstructionLine, LineQuery } from "./line";
+import { InstructionLine, InterchangeLine, LineQuery } from "./line";
 import { MrtMap, StationID, StationType } from "./types";
 
 export const isPeak = (currentTime: Date) => {
@@ -182,4 +182,89 @@ export const dijksta = (
 	const paths = reconstructPath(cameFrom, start, end);
 	const instructions = reconstructInstructions(paths);
 	return { paths, duration, instructions };
+};
+
+// multiple shortest-path: EW15 -> NE6
+// TODO: logic if a station is an interchange should not be based on the code, should be based on the color
+export const dijkstra2 = (
+	map: MrtMap,
+	start: StationID,
+	end: StationID,
+	startTime?: string
+) => {
+	const distances = Object.keys(map.entities.stations).reduce<{
+		[key: string]: number;
+	}>((accum, current) => ({ ...accum, [current]: Infinity }), {});
+	type Pair = [number, StationID, LineQuery[], Date?];
+	interface Path {
+		routes: LineQuery[];
+		duration: number;
+	}
+	const startTimeObject = startTime ? new Date(startTime) : undefined;
+	const pq = new Heap<Pair>(
+		[[0, start, [], startTimeObject]],
+		(a, b) => a[0] < b[0]
+	);
+	distances[start] = 0;
+	const allPossiblePaths: Path[] = [];
+
+	const isVisited = (station: string, paths: LineQuery[]) => {
+		for (const p of paths) {
+			if (p.line.target.id === station || p.line.source.id === station) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	while (pq.length) {
+		const [distance, currentStation, pathsSoFar, currentTime] = pq.pop();
+		if (currentStation === end) {
+			allPossiblePaths.push({ routes: pathsSoFar, duration: distances[end] });
+			continue;
+		}
+		if (allPossiblePaths.length >= 5) {
+			break;
+		}
+		for (const neighbor of map.routes[currentStation] || []) {
+			const lineId = constructLineId(currentStation, neighbor);
+			const line = map.entities.lines[lineId];
+			const lineQuery = new LineQuery(line, currentTime);
+			const cost = lineQuery.computeDuration();
+			let newTime;
+			if (currentTime) {
+				newTime = new Date(currentTime);
+				newTime.setMinutes(newTime.getMinutes() + cost);
+			}
+			// TODO: use connectivity instead of checking just one edge
+			if (line instanceof InterchangeLine && neighbor === end) {
+				allPossiblePaths.push({
+					routes: pathsSoFar,
+					duration: distance,
+				});
+				break;
+			}
+			const newCost = distance + cost;
+			distances[neighbor] = newCost;
+			if (!isVisited(neighbor, pathsSoFar)) {
+				pq.push([
+					newCost,
+					neighbor as StationID,
+					[...pathsSoFar, lineQuery],
+					newTime,
+				]);
+			}
+		}
+	}
+	const allPossiblePathsWithInstructions = allPossiblePaths.map(
+		({ routes, duration }) => {
+			return {
+				instructions: routes.map((lineQuery) =>
+					new InstructionLine(lineQuery).getInstruction()
+				),
+				duration: duration,
+			};
+		}
+	);
+	return { allPossiblePathsWithInstructions };
 };
