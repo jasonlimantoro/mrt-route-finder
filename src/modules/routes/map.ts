@@ -193,7 +193,7 @@ export const mrtMap: MrtMap = {
 		TE17: ["TE18", "TE16", "NE3", "EW16"],
 		TE18: ["TE19", "TE17"],
 		TE19: ["TE20", "TE18"],
-		TE20: ["TE21", "TE19", "CC33", "NS27"],
+		TE20: ["TE21", "TE19", "CE2", "NS27"],
 		TE21: ["TE22", "TE20"],
 		TE22: ["TE21"],
 	},
@@ -310,7 +310,7 @@ export const mrtMap: MrtMap = {
 	const stations = await createStations();
 	const lines: { [key: string]: Line } = {};
 	for (const sourceId of Object.keys(mrtMap.routes)) {
-		const targetIds = mrtMap.routes[sourceId as StationID] || [];
+		const targetIds = mrtMap.routes[sourceId as StationID];
 		const stationType = stationCodeToLineType(sourceId);
 		for (const targetId of targetIds) {
 			const lineId = constructLineId(sourceId, targetId);

@@ -171,12 +171,8 @@ export type StationID =
 	| "TE21"
 	| "TE22";
 
-type LinkID = string;
-
-type Connection = LinkID;
-
 type Routes = {
-	[K in StationID]: Connection[];
+	[K in StationID]: StationID[];
 };
 
 export interface StationData {
