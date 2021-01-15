@@ -93,12 +93,13 @@ export const mrtMap: MrtMap = {
 		NS3: ["NS4", "NS2"],
 		NS2: ["NS3", "NS1"],
 		NS1: ["NS2", "EW24"],
+		CE0: ["CC4"],
 		CE1: ["CE2", "DT16", "CC4"],
 		CE2: ["CE1", "NS28"],
 		CC1: ["NS24", "NE6", "CC2"],
 		CC2: ["CC3", "CC1"],
 		CC3: ["CC4", "CC2"],
-		CC4: ["CC5", "CC3"],
+		CC4: ["CC5", "CC3", "CE0"],
 		CC5: ["CC6", "CC4"],
 		CC6: ["CC7", "CC5"],
 		CC7: ["CC8", "CC6"],
@@ -173,14 +174,134 @@ export const mrtMap: MrtMap = {
 		NE15: ["NE16", "NE14"],
 		NE16: ["NE17", "NE15"],
 		NE17: ["NE16"],
+		TE1: ["TE2"],
+		TE2: ["TE1", "NS9"],
+		TE3: ["TE4", "TE2"],
+		TE4: ["TE5", "TE3"],
+		TE5: ["TE6", "TE4"],
+		TE6: ["TE7", "TE5"],
+		TE7: ["TE8", "TE6"],
+		TE8: ["TE9", "TE7"],
+		TE9: ["TE10", "TE8", "CC17"],
+		TE10: ["TE11", "TE9"],
+		TE11: ["TE12", "TE10", "DT10"],
+		TE12: ["TE13", "TE11"],
+		TE13: ["TE14", "TE12"],
+		TE14: ["TE15", "TE13", "NS22"],
+		TE15: ["TE16", "TE14"],
+		TE16: ["TE17", "TE15"],
+		TE17: ["TE18", "TE16", "NE3", "EW16"],
+		TE18: ["TE19", "TE17"],
+		TE19: ["TE20", "TE18"],
+		TE20: ["TE21", "TE19", "CC33", "NS27"],
+		TE21: ["TE22", "TE20"],
+		TE22: ["TE21"],
 	},
 	entities: {
 		stations: {},
 		lines: {},
 		interchanges: {
+			// Dhoby Ghout
 			CC1: "NS24",
 			NE6: "NS24",
 			NS24: "NS24",
+			// JE
+			NS1: "NS1",
+			EW24: "EW24",
+
+			// Buona Vista
+			EW21: "EW21",
+			CC22: "EW21",
+
+			// Outram Park
+			EW16: "EW16",
+			NE3: "EW16",
+			TE17: "EW16",
+
+			// HarbourFront
+			NE1: "NE1",
+			CC29: "NE1",
+
+			// China Town
+			NE4: "NE4",
+			DT19: "NE4",
+
+			// Raffles Place
+			NS26: "NS26",
+			EW14: "NS26",
+
+			// City Hall
+			NS25: "NS25",
+			EW13: "NS25",
+
+			// Marina Bay
+			NS27: "NS27",
+			CE2: "NS27",
+			TE20: "NS27",
+
+			// Bayfront
+			CE1: "CE1",
+			DT16: "CE1",
+
+			// Promenade
+			CC4: "CC4",
+			DT15: "CC4",
+
+			// Bugis
+			EW12: "EW12",
+			DT14: "EW12",
+
+			// Little india
+			NE7: "NE7",
+			DT12: "NE7",
+
+			// Newton
+			NS21: "NS21",
+			DT11: "NS21",
+
+			// Bishan
+			NS17: "NS17",
+			CC15: "NS17",
+
+			// Serangoon
+			NE12: "NE12",
+			CC13: "NE12",
+
+			// Botanic Garden
+			CC19: "CC19",
+			DT9: "CC19",
+
+			// Caldecott
+			TE9: "TE9",
+			CC17: "TE9",
+
+			// Stevens
+			DT10: "DT10",
+			TE11: "DT10",
+
+			// Orchard
+			NS22: "NS22",
+			TE14: "NS22",
+
+			// Woodlands
+			NS9: "NS9",
+			TE2: "NS9",
+
+			// Macpherson
+			CC10: "CC10",
+			DT26: "CC10",
+
+			// Paya Lebar
+			EW8: "EW8",
+			CC9: "EW8",
+
+			// Tampines
+			EW2: "EW2",
+			DT32: "EW2",
+
+			// Expo
+			CG1: "CG1",
+			DT35: "DT35",
 		},
 	},
 };
