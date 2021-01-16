@@ -210,10 +210,16 @@ export interface MrtMap {
 @ObjectType()
 class InstructionMeta {
 	@Field(() => String, { nullable: true })
-	time?: string;
+	currentTime?: string;
 
 	@Field(() => Int)
 	cost: number;
+
+	@Field(() => String)
+	from: string;
+
+	@Field(() => String)
+	to: string;
 }
 @ObjectType()
 export class Instruction {
@@ -229,8 +235,17 @@ export class Route {
 	@Field(() => [Instruction!]!)
 	instructions: Instruction[];
 
+	@Field(() => [String!]!)
+	stops: string[];
+
 	@Field(() => Int!)
-	duration: number;
+	numberOfStops: number;
+
+	@Field(() => Int!, { nullable: true })
+	durationMinute?: number;
+
+	@Field(() => String, { nullable: true })
+	arrivalTime?: string;
 }
 
 @ObjectType()

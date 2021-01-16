@@ -214,19 +214,21 @@ export class InstructionLine {
 	}
 
 	getInstruction = (): Instruction => {
-		const { line } = this.lineQuery;
+		const { source, target } = this.lineQuery.line;
 		const meta = {
 			currentTime: this.lineQuery.currentTime?.toLocaleTimeString(),
 			cost: this.lineQuery.computeDuration(),
+			from: source.id,
+			to: target.id,
 		};
 		if (this.lineQuery.line instanceof InterchangeLine) {
 			return {
-				text: `Change to ${line.target.data.line}`,
+				text: `Change to ${target.data.line} at ${target.data.name}`,
 				meta,
 			};
 		} else {
 			return {
-				text: `Take line ${line.source.data.line} from ${line.source.id} to ${line.target.id}`,
+				text: `Take line ${source.data.line} from ${source.data.name} to ${target.data.name}`,
 				meta,
 			};
 		}

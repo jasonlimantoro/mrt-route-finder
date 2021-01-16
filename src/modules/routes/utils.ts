@@ -1,6 +1,6 @@
 import { InstructionLine, InterchangeLine, LineQuery } from "./line";
 import { mrtMap } from "./map";
-import { Instruction, MrtMap, StationID, StationType } from "./types";
+import { Instruction, MrtMap, Route, StationID, StationType } from "./types";
 
 export const isPeak = (currentTime: Date) => {
 	const dayNumber = currentTime.getDay();
@@ -185,12 +185,18 @@ export const dijksta = (
 	return { paths, duration, instructions };
 };
 
+const addMinutes = (startTime: Date, minutes: number) => {
+	const newTime = new Date(startTime);
+	newTime.setMinutes(newTime.getMinutes() + minutes);
+	return newTime;
+};
+
 export const dijkstra2 = (
 	map: MrtMap,
 	start: StationID,
 	end: StationID,
 	startTime?: string
-) => {
+): Route[] => {
 	type Pair = [number, StationID, LineQuery[], Date?];
 	interface Path {
 		routes: LineQuery[];
@@ -256,11 +262,7 @@ export const dijkstra2 = (
 				continue;
 			}
 
-			let newTime;
-			if (currentTime) {
-				newTime = new Date(currentTime);
-				newTime.setMinutes(newTime.getMinutes() + cost);
-			}
+			let newTime = currentTime ? addMinutes(currentTime, cost) : undefined;
 			if (!isVisited(neighbor, pathsSoFar)) {
 				const newCost = distance + cost;
 				pq.push([
@@ -273,14 +275,19 @@ export const dijkstra2 = (
 		}
 	}
 	const allPossiblePathsWithInstructions = allPossiblePaths.map(
-		({ routes, duration }) => {
+		({ routes, duration: durationMinute }) => {
 			return {
 				instructions: routes.map((lineQuery) =>
 					new InstructionLine(lineQuery).getInstruction()
 				),
-				duration: duration,
+				stops: [start, ...routes.map((lineQuery) => lineQuery.line.target.id)],
+				durationMinute: startTimeObject ? durationMinute : undefined,
+				numberOfStops: routes.length,
+				arrivalTime: startTimeObject
+					? addMinutes(startTimeObject, durationMinute).toLocaleTimeString()
+					: undefined,
 			};
 		}
 	);
-	return { allPossiblePathsWithInstructions };
+	return allPossiblePathsWithInstructions;
 };

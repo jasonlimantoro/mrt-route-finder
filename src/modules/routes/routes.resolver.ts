@@ -11,14 +11,9 @@ export class RouteResolver {
 		@Arg("target") target: StationID,
 		@Arg("startTime", { nullable: true }) startTime: string
 	): Promise<RouteResponse> {
-		const { allPossiblePathsWithInstructions } = dijkstra2(
-			mrtMap,
-			source,
-			target,
-			startTime
-		);
+		const allRoutes = dijkstra2(mrtMap, source, target, startTime);
 		return {
-			allRoutes: allPossiblePathsWithInstructions,
+			allRoutes,
 		};
 	}
 	@FieldResolver(() => Route)
