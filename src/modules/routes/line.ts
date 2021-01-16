@@ -40,8 +40,6 @@ export class NSLine extends Line {
 	computeDuration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
-		} else if (isNight(currentTime)) {
-			return 10;
 		} else {
 			return 10;
 		}
@@ -55,14 +53,8 @@ export class CCLine extends Line {
 	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	computeDuration(currentTime: Date): number {
-		if (isPeak(currentTime)) {
-			return 12;
-		} else if (isNight(currentTime)) {
-			return 10;
-		} else {
-			return 10;
-		}
+	computeDuration(_currentTime: Date): number {
+		return 10;
 	}
 
 	isOperating(_currentTime: Date): boolean {
@@ -74,14 +66,8 @@ export class CGLine extends Line {
 	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	computeDuration(currentTime: Date): number {
-		if (isPeak(currentTime)) {
-			return 12;
-		} else if (isNight(currentTime)) {
-			return 10;
-		} else {
-			return 10;
-		}
+	computeDuration(_currentTime: Date): number {
+		return 10;
 	}
 
 	isOperating(currentTime: Date): boolean {
@@ -96,8 +82,6 @@ export class NELine extends Line {
 	computeDuration(currentTime: Date): number {
 		if (isPeak(currentTime)) {
 			return 12;
-		} else if (isNight(currentTime)) {
-			return 10;
 		} else {
 			return 10;
 		}
@@ -111,14 +95,8 @@ export class CELine extends Line {
 	constructor(id: string, source: Station, target: Station) {
 		super(id, source, target);
 	}
-	computeDuration(currentTime: Date): number {
-		if (isPeak(currentTime)) {
-			return 12;
-		} else if (isNight(currentTime)) {
-			return 10;
-		} else {
-			return 10;
-		}
+	computeDuration(_currentTime: Date): number {
+		return 10;
 	}
 
 	isOperating(currentTime: Date): boolean {
@@ -238,7 +216,7 @@ export class InstructionLine {
 	getInstruction = (): Instruction => {
 		const { line } = this.lineQuery;
 		const meta = {
-			time: this.lineQuery.currentTime?.toLocaleTimeString(),
+			currentTime: this.lineQuery.currentTime?.toLocaleTimeString(),
 			cost: this.lineQuery.computeDuration(),
 		};
 		if (this.lineQuery.line instanceof InterchangeLine) {
