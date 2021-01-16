@@ -64,7 +64,7 @@ export const mrtMap: MrtMap = {
 		EW2: ["EW3", "EW1"],
 		EW1: ["EW2"],
 		CG2: ["CG1"],
-		CG1: ["CG0", "DT35"],
+		CG1: ["CG2", "CG0", "DT35"],
 		CG0: ["CG1", "EW4"],
 		NS28: ["NS27"],
 		NS27: ["NS28", "NS26", "CE2"],
