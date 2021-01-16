@@ -16,12 +16,12 @@ export class RouteResolver {
 			allRoutes,
 		};
 	}
-	@FieldResolver(() => Route)
+	@FieldResolver(() => Route, { nullable: true })
 	topRoute(@Root() routeResponse: RouteResponse) {
 		return routeResponse.allRoutes[0];
 	}
 
-	@FieldResolver(() => [Route]!)
+	@FieldResolver(() => [Route], { nullable: true })
 	alternativeRoutes(
 		@Root() routeResponse: RouteResponse,
 		@Arg("take", () => Int, { defaultValue: 2 }) take: number
