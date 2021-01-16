@@ -235,7 +235,17 @@ export const dijkstra2 = (
 		return root1 === root2;
 	};
 
+	// It's hard to say what the upper bound is
+	// One idea: since this limits to only 5 shortest paths, then the worst complexity would be 5 * O(Dijkstra)
+	// O(Dijkstra) = O(V^2), V is the number of vertices
+	// Though it is not tight bound, it's sufficient to find 5 paths
+	const MAX_BOUND = 5 * 200 * 200;
+	let i = 0;
 	while (pq.length) {
+		i++;
+		if (i > MAX_BOUND) {
+			break;
+		}
 		const [distance, currentStation, pathsSoFar, currentTime] = pq.pop();
 		if (currentStation === end || connected(currentStation, end)) {
 			allPossiblePaths.push({ routes: pathsSoFar, duration: distance });
