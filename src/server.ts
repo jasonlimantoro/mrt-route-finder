@@ -6,6 +6,8 @@ import "express-async-errors";
 import { errorHandler } from "./lib/middleware";
 import { ApolloServer } from "apollo-server-express";
 import { createSchema } from "./lib/utils";
+import { MRT } from "./modules/routes/map";
+import { MyContext } from "./lib/context";
 
 export const startServer = async () => {
 	const app = express();
@@ -16,13 +18,17 @@ export const startServer = async () => {
 
 	app.use(require("./routes").default);
 
+	const mrtMap = new MRT();
+	await mrtMap.init();
+
 	const apolloServer = new ApolloServer({
 		schema: await createSchema(),
-		context: ({ req, res }) => ({ req, res }),
+		context: ({ req, res }): MyContext => ({ req, res, mrt: mrtMap }),
 		playground: {
 			settings: {
 				"request.credentials": "include",
-			},
+				"prettier.printWidth": "60",
+			} as any,
 		},
 	});
 	apolloServer.applyMiddleware({ app });

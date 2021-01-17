@@ -1,7 +1,15 @@
-import { Arg, FieldResolver, Int, Query, Resolver, Root } from "type-graphql";
-import { mrtMap } from "./map";
+import { MyContext } from "@app/lib/context";
+import {
+	Arg,
+	Ctx,
+	FieldResolver,
+	Int,
+	Query,
+	Resolver,
+	Root,
+} from "type-graphql";
 import { RouteResponse, StationID, Route } from "./types";
-import { findPath } from "./utils";
+import { dijkstra2 } from "./utils";
 
 @Resolver(() => RouteResponse)
 export class RouteResolver {
@@ -9,9 +17,10 @@ export class RouteResolver {
 	async route(
 		@Arg("source") source: StationID,
 		@Arg("target") target: StationID,
-		@Arg("startTime", { nullable: true }) startTime: string
+		@Arg("startTime", { nullable: true }) startTime: string,
+		@Ctx() ctx: MyContext
 	): Promise<RouteResponse> {
-		const allRoutes = findPath(mrtMap, source, target, 5, startTime);
+		const allRoutes = dijkstra2(ctx.mrt, source, target, startTime);
 		return {
 			allRoutes,
 		};

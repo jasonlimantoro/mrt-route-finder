@@ -1,32 +1,8 @@
 import { parse } from "@app/data/dataParser";
-import { Line, LineFactory } from "./line";
+import { Line, LineFactory, LineQuery } from "./line";
 import { Station, StationFactory } from "./station";
 import { MrtMap, StationID, StationType } from "./types";
 import { constructLineId, stationCodeToLineType } from "./utils";
-
-const createStations = async () => {
-	const data = await parse();
-	return Object.values(data).reduce<{ [key: string]: Station }>(
-		(accum, current) => {
-			const {
-				"Station Code": stationCode,
-				"Station Name": stationName,
-				"Opening Date": openingDate,
-			} = current;
-			const stationType = stationCode.substr(0, 2) as StationType;
-			return {
-				...accum,
-				[stationCode]: StationFactory.create(stationType, stationCode, {
-					id: stationCode as StationID,
-					name: stationName,
-					line: stationType,
-					openingDate: new Date(openingDate),
-				}),
-			};
-		},
-		{}
-	);
-};
 
 export const mrtMap: MrtMap = {
 	routes: {
@@ -61,7 +37,7 @@ export const mrtMap: MrtMap = {
 		EW5: ["EW6", "EW4"],
 		EW4: ["EW5", "EW3", "CG0"],
 		EW3: ["EW4", "EW2"],
-		EW2: ["EW3", "EW1"],
+		EW2: ["EW3", "EW1", "DT32"],
 		EW1: ["EW2"],
 		CG2: ["CG1"],
 		CG1: ["CG2", "CG0", "DT35"],
@@ -306,23 +282,110 @@ export const mrtMap: MrtMap = {
 	},
 };
 
-(async () => {
-	const stations = await createStations();
-	const lines: { [key: string]: Line } = {};
-	for (const sourceId of Object.keys(mrtMap.routes)) {
-		const targetIds = mrtMap.routes[sourceId as StationID];
-		const stationType = stationCodeToLineType(sourceId);
-		for (const targetId of targetIds) {
-			const lineId = constructLineId(sourceId, targetId);
-			const line = LineFactory.create(
-				stationType,
-				lineId,
-				stations[sourceId],
-				stations[targetId]
-			);
-			lines[lineId] = line;
+type MRTGraph = {
+	[K in StationID]: StationID[];
+};
+
+type MRTInterChange = {
+	[K in StationID]?: StationID;
+};
+export class MRT {
+	routes;
+
+	interchanges;
+
+	lines: { [key: string]: Line };
+
+	stations: { [key: string]: Station };
+
+	constructor(
+		routes: MRTGraph = mrtMap.routes,
+		interChanges: MRTInterChange = mrtMap.entities.interchanges
+	) {
+		this.routes = routes;
+		this.interchanges = interChanges;
+	}
+
+	static async createStations() {
+		const data = await parse();
+		return Object.values(data).reduce<{ [key: string]: Station }>(
+			(accum, current) => {
+				const {
+					"Station Code": stationCode,
+					"Station Name": stationName,
+					"Opening Date": openingDate,
+				} = current;
+				const stationType = stationCode.substr(0, 2) as StationType;
+				return {
+					...accum,
+					[stationCode]: StationFactory.create(stationType, stationCode, {
+						id: stationCode as StationID,
+						name: stationName,
+						line: stationType,
+						openingDate: new Date(openingDate),
+					}),
+				};
+			},
+			{}
+		);
+	}
+
+	async init() {
+		const stations = await MRT.createStations();
+		const lines: { [key: string]: Line } = {};
+		for (const sourceId of Object.keys(this.routes)) {
+			const targetIds = this.routes[sourceId as StationID];
+			const stationType = stationCodeToLineType(sourceId);
+			for (const targetId of targetIds) {
+				const lineId = constructLineId(sourceId, targetId);
+				const line = LineFactory.create(
+					stationType,
+					lineId,
+					stations[sourceId],
+					stations[targetId]
+				);
+				lines[lineId] = line;
+			}
+		}
+		this.stations = stations;
+		this.lines = lines;
+	}
+
+	getLine(u: StationID, v: StationID) {
+		const lineId = constructLineId(u, v);
+		return this.lines[lineId];
+	}
+
+	computeCost(u: StationID, v: StationID, currentTime?: Date) {
+		const lineQuery = new LineQuery(this.getLine(u, v), currentTime);
+		return lineQuery.computeDuration();
+	}
+
+	computeCostPaths(stations: StationID[], currentTime?: Date) {
+		let totalCost = 0;
+		for (let i = 1; i < stations.length; i++) {
+			totalCost += this.computeCost(stations[i - 1], stations[i], currentTime);
+		}
+		return totalCost;
+	}
+
+	removeLine(u: StationID, v: StationID) {
+		this.routes[u] = this.routes[u].filter((neighbor) => neighbor !== v);
+	}
+
+	addEdge(u: StationID, v: StationID) {
+		this.routes[u].push(v);
+	}
+
+	removeStation(u: StationID) {
+		delete this.routes[u];
+	}
+
+	addNode(u: StationID, neighbors: StationID[]) {
+		if (u in this.routes) {
+			this.routes[u] = [...this.routes[u], ...neighbors];
+		} else {
+			this.routes[u] = neighbors;
 		}
 	}
-	mrtMap.entities.lines = lines;
-	mrtMap.entities.stations = stations;
-})();
+}

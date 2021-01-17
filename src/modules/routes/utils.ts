@@ -1,6 +1,6 @@
 import { Graph, ShortestPathAlgo, yenAlgorithm } from "@app/lib/algorithm";
 import { InstructionLine, InterchangeLine, LineQuery } from "./line";
-import { mrtMap } from "./map";
+import { MRT, mrtMap } from "./map";
 import { Instruction, MrtMap, Route, StationID, StationType } from "./types";
 
 export const isPeak = (currentTime: Date) => {
@@ -193,7 +193,7 @@ const addMinutes = (startTime: Date, minutes: number) => {
 };
 
 export const dijkstra2 = (
-	map: MrtMap,
+	mrt: MRT,
 	start: StationID,
 	end: StationID,
 	startTime?: string
@@ -256,9 +256,8 @@ export const dijkstra2 = (
 			break;
 		}
 		const lastLineQuery = pathsSoFar[pathsSoFar.length - 1];
-		for (const neighbor of map.routes[currentStation] || []) {
-			const lineId = constructLineId(currentStation, neighbor);
-			const line = map.entities.lines[lineId];
+		for (const neighbor of mrt.routes[currentStation] || []) {
+			const line = mrt.getLine(currentStation, neighbor);
 			const lineQuery = new LineQuery(line, currentTime);
 			const cost = lineQuery.computeDuration();
 			// Don't wait two times consecutively in station interchanges like Dhoby Ghout
