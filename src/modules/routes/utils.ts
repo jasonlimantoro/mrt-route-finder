@@ -323,7 +323,7 @@ const constructPath = (
 	return path.reverse();
 };
 
-export const dijkstra: ShortestPathAlgo<StationID, { startTime: string }> = (
+export const dijkstra: ShortestPathAlgo<StationID> = (
 	graph: Graph<StationID>,
 	start: StationID,
 	end: StationID,
@@ -384,19 +384,18 @@ export const dijkstra: ShortestPathAlgo<StationID, { startTime: string }> = (
 	};
 };
 
-export const findPath = (
-	mrtMap: MrtMap,
+export const ksp = (
+	mrtMap: MRT,
 	start: StationID,
 	end: StationID,
-	K: number,
-	startTime: string
+	K: number
 ) => {
-	const ksp = yenAlgorithm<StationID, { startTime: string }>(
+	const ksp = yenAlgorithm<StationID>(
 		mrtMap.routes,
 		start,
 		end,
 		K,
-		{ startTime },
+		{},
 		dijkstra
 	);
 
@@ -408,7 +407,7 @@ export const findPath = (
 			const prevStation = sp.path[i - 1];
 			const currentStation = sp.path[i];
 			const lineId = constructLineId(prevStation, currentStation);
-			const line = mrtMap.entities.lines[lineId];
+			const line = mrtMap.lines[lineId];
 			instructions.push(
 				new InstructionLine(new LineQuery(line)).getInstruction()
 			);
@@ -417,7 +416,6 @@ export const findPath = (
 			instructions,
 			numberOfStops: sp.path.length - 1,
 			stops: sp.path,
-			durationMinute: sp.cost,
 		});
 	}
 	return all;

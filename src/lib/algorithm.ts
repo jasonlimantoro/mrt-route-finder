@@ -38,7 +38,7 @@ const reconstructPath = (
 	return path.reverse();
 };
 
-const dijkstra: ShortestPathAlgo<string> = (
+const vanilaDijkstra: ShortestPathAlgo<string> = (
 	graph,
 	start,
 	end
@@ -83,7 +83,7 @@ export const yenAlgorithm = <V extends string, M extends Object = {}>(
 	end: V,
 	K: number,
 	meta: M,
-	shortestPathAlgorithm: ShortestPathAlgo<V, M> = dijkstra
+	shortestPathAlgorithm: ShortestPathAlgo<V, M> = vanilaDijkstra
 ) => {
 	const ksp: ShortestPath[] = [];
 	const candidates = new Heap<ShortestPath>([], (a, b) => a.cost < b.cost);
