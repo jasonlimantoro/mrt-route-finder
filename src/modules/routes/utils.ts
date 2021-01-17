@@ -1,3 +1,4 @@
+import { Graph, ShortestPathAlgo, yenAlgorithm } from "@app/lib/algorithm";
 import { InstructionLine, InterchangeLine, LineQuery } from "./line";
 import { mrtMap } from "./map";
 import { Instruction, MrtMap, Route, StationID, StationType } from "./types";
@@ -33,7 +34,7 @@ export const constructLineId = (src: string, target: string) => {
 
 type CompareFn<V> = (a: V, b: V) => boolean;
 
-export default class Heap<V> {
+export class Heap<V> {
 	values: V[];
 
 	length: number;
@@ -300,4 +301,125 @@ export const dijkstra2 = (
 		}
 	);
 	return allPossiblePathsWithInstructions;
+};
+
+const constructPath = (
+	start: StationID,
+	end: StationID,
+	cameFrom: { [key: string]: StationID }
+) => {
+	const path: StationID[] = [];
+	let current = end;
+
+	while (current !== start) {
+		if (!current) {
+			return [];
+		}
+		path.push(current);
+		current = cameFrom[current];
+	}
+
+	path.push(start);
+
+	return path.reverse();
+};
+
+export const dijkstra: ShortestPathAlgo<StationID, { startTime: string }> = (
+	graph: Graph<StationID>,
+	start: StationID,
+	end: StationID,
+	_meta
+) => {
+	type Pair = [number, StationID, boolean];
+	const distances = Object.keys(graph).reduce<{ [key: string]: number }>(
+		(accum, current) => ({
+			...accum,
+			[current]: Infinity,
+		}),
+		{}
+	);
+	const find = (x: StationID) => {
+		let i = x;
+		const { interchanges } = mrtMap.entities;
+		while (interchanges[i] !== i) {
+			i = interchanges[i] as StationID;
+		}
+		return i;
+	};
+
+	const connected = (x: StationID, y: StationID) => {
+		const { interchanges } = mrtMap.entities;
+		if (!interchanges[x] || !interchanges[y]) return false;
+		const root1 = find(x);
+		const root2 = find(y);
+		return root1 === root2;
+	};
+
+	const pq = new Heap<Pair>([[0, start, false]], (a, b) => a[0] < b[0]);
+	distances[start] = 0;
+	const cameFrom: { [key: string]: StationID } = {};
+	cameFrom[start] = start;
+
+	while (pq.length) {
+		const [distance, u, interchangeMovement] = pq.pop();
+		if (u === end || connected(u, end)) {
+			break;
+		}
+		for (const v of graph[u]) {
+			const newCost = distance + 1;
+			if (connected(u, v) && interchangeMovement) {
+				continue;
+			}
+			if (distances[v] > newCost) {
+				distances[v] = newCost;
+				cameFrom[v] = u;
+				pq.push([newCost, v, connected(u, v)]);
+			}
+		}
+	}
+	const path = constructPath(start, end, cameFrom);
+
+	return {
+		cost: path.length - 1,
+		path,
+	};
+};
+
+export const findPath = (
+	mrtMap: MrtMap,
+	start: StationID,
+	end: StationID,
+	K: number,
+	startTime: string
+) => {
+	const ksp = yenAlgorithm<StationID, { startTime: string }>(
+		mrtMap.routes,
+		start,
+		end,
+		K,
+		{ startTime },
+		dijkstra
+	);
+
+	const all: Route[] = [];
+
+	for (const sp of ksp) {
+		const instructions: Instruction[] = [];
+		for (let i = 1; i < sp.path.length; i++) {
+			const prevStation = sp.path[i - 1];
+			const currentStation = sp.path[i];
+			const lineId = constructLineId(prevStation, currentStation);
+			const line = mrtMap.entities.lines[lineId];
+			instructions.push(
+				new InstructionLine(new LineQuery(line)).getInstruction()
+			);
+		}
+		all.push({
+			instructions,
+			numberOfStops: sp.path.length - 1,
+			stops: sp.path,
+			durationMinute: sp.cost,
+		});
+	}
+	return all;
 };

@@ -10,7 +10,7 @@ describe("Yen algorithm", () => {
 			E: ["B", "F"],
 			F: [],
 		};
-		const result = yenAlgorithm(graphs, "D", "F", 4);
+		const result = yenAlgorithm(graphs, "D", "F", 4, {});
 		expect(result).toHaveLength(4);
 		expect(result).toMatchSnapshot();
 	});
@@ -24,7 +24,7 @@ describe("Yen algorithm", () => {
 			E: ["F"],
 			F: [],
 		};
-		const result = yenAlgorithm(graphs, "D", "F", 4);
+		const result = yenAlgorithm(graphs, "D", "F", 4, {});
 		expect(result).toEqual([{ path: ["D", "E", "F"], cost: 2 }]);
 	});
 
@@ -42,7 +42,7 @@ describe("Yen algorithm", () => {
 			J: ["I", "F"],
 		};
 		const k = 5;
-		const result = yenAlgorithm(graphs, "D", "F", k);
+		const result = yenAlgorithm(graphs, "D", "F", k, {});
 		expect(result).toHaveLength(2);
 	});
 });

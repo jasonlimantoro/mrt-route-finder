@@ -2,14 +2,20 @@ import { Heap } from "@app/modules/routes/utils";
 import isEqual from "lodash/isEqual";
 import cloneDeep from "lodash/cloneDeep";
 
-interface Graph<V = any> {
+export interface Graph<V = any> {
 	[key: string]: V[];
 }
-
 interface ShortestPath {
 	path: string[];
 	cost: number;
 }
+
+export type ShortestPathAlgo<V extends String, M extends Object = {}> = (
+	graph: Graph<V>,
+	start: V,
+	end: V,
+	meta: M
+) => ShortestPath;
 
 const reconstructPath = (
 	start: string,
@@ -32,7 +38,11 @@ const reconstructPath = (
 	return path.reverse();
 };
 
-const dijkstra = (graph: Graph, start: string, end: string): ShortestPath => {
+const dijkstra: ShortestPathAlgo<string> = (
+	graph,
+	start,
+	end
+): ShortestPath => {
 	type Pair = [number, string];
 	const distances = Object.keys(graph).reduce<{ [key: string]: number }>(
 		(accum, current) => ({
@@ -67,15 +77,17 @@ const dijkstra = (graph: Graph, start: string, end: string): ShortestPath => {
 		path,
 	};
 };
-export const yenAlgorithm = (
-	graph: Graph,
-	start: string,
-	end: string,
-	K: number
+export const yenAlgorithm = <V extends string, M extends Object = {}>(
+	graph: Graph<V>,
+	start: V,
+	end: V,
+	K: number,
+	meta: M,
+	shortestPathAlgorithm: ShortestPathAlgo<V, M> = dijkstra
 ) => {
 	const ksp: ShortestPath[] = [];
 	const candidates = new Heap<ShortestPath>([], (a, b) => a.cost < b.cost);
-	const { path, cost } = dijkstra(graph, start, end);
+	const { path, cost } = shortestPathAlgorithm(graph, start, end, meta);
 	ksp[0] = { path, cost };
 	for (let k = 1; k < K; k++) {
 		// find the cut (a.k.a spur node)
@@ -107,7 +119,12 @@ export const yenAlgorithm = (
 			// rootPath = [a,b,c], rootCost = 2 (rootPath.length - 1)
 			// spurPath = [c,d,e,f,g], spurCost = 4 (spurPath.length - 1)
 			// candidatePath = [a,b,c,d,e,f,g], candidateCost = 2 + 4 = 6
-			const { path: spurPath } = dijkstra(graphClone, spurNode, end);
+			const { path: spurPath } = shortestPathAlgorithm(
+				graphClone,
+				spurNode as any,
+				end,
+				meta
+			);
 			if (spurPath.length > 0) {
 				const spurCost = spurPath.length - 1; // V - 1 edges for path with V nodes
 				const candidatePath = [

@@ -1,7 +1,7 @@
 import { Arg, FieldResolver, Int, Query, Resolver, Root } from "type-graphql";
 import { mrtMap } from "./map";
 import { RouteResponse, StationID, Route } from "./types";
-import { dijkstra2 } from "./utils";
+import { findPath } from "./utils";
 
 @Resolver(() => RouteResponse)
 export class RouteResolver {
@@ -11,7 +11,7 @@ export class RouteResolver {
 		@Arg("target") target: StationID,
 		@Arg("startTime", { nullable: true }) startTime: string
 	): Promise<RouteResponse> {
-		const allRoutes = dijkstra2(mrtMap, source, target, startTime);
+		const allRoutes = findPath(mrtMap, source, target, 5, startTime);
 		return {
 			allRoutes,
 		};
