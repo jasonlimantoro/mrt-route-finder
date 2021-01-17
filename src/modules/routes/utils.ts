@@ -1,6 +1,6 @@
-import { Graph, ShortestPathAlgo, yenAlgorithm } from "@app/lib/algorithm";
+import { yenAlgorithm } from "@app/lib/algorithm";
 import { InstructionLine, InterchangeLine, LineQuery } from "./line";
-import { MRT, mrtMap } from "./map";
+import { MRT } from "./map";
 import { Instruction, MrtMap, Route, StationID, StationType } from "./types";
 
 export const isPeak = (currentTime: Date) => {
@@ -221,7 +221,7 @@ export const dijkstra2 = (
 
 	const find = (x: StationID) => {
 		let i = x;
-		const { interchanges } = mrtMap.entities;
+		const { interchanges } = mrt;
 		while (interchanges[i] !== i) {
 			i = interchanges[i] as StationID;
 		}
@@ -229,7 +229,7 @@ export const dijkstra2 = (
 	};
 
 	const connected = (x: StationID, y: StationID) => {
-		const { interchanges } = mrtMap.entities;
+		const { interchanges } = mrt;
 		if (!interchanges[x] || !interchanges[y]) return false;
 		const root1 = find(x);
 		const root2 = find(y);
@@ -257,7 +257,7 @@ export const dijkstra2 = (
 		}
 		const lastLineQuery = pathsSoFar[pathsSoFar.length - 1];
 		for (const neighbor of mrt.routes[currentStation] || []) {
-			const line = mrt.getLine(currentStation, neighbor);
+			const line = mrt.getLine(currentStation, neighbor as StationID);
 			const lineQuery = new LineQuery(line, currentTime);
 			const cost = lineQuery.computeDuration();
 			// Don't wait two times consecutively in station interchanges like Dhoby Ghout
@@ -303,11 +303,11 @@ export const dijkstra2 = (
 };
 
 const constructPath = (
-	start: StationID,
-	end: StationID,
-	cameFrom: { [key: string]: StationID }
+	start: string,
+	end: string,
+	cameFrom: { [key: string]: string }
 ) => {
-	const path: StationID[] = [];
+	const path: string[] = [];
 	let current = end;
 
 	while (current !== start) {
@@ -323,31 +323,26 @@ const constructPath = (
 	return path.reverse();
 };
 
-export const dijkstra: ShortestPathAlgo<StationID> = (
-	graph: Graph<StationID>,
-	start: StationID,
-	end: StationID,
-	_meta
-) => {
-	type Pair = [number, StationID, boolean];
-	const distances = Object.keys(graph).reduce<{ [key: string]: number }>(
+export const dijkstra = (mrt: MRT, start: string, end: string, _meta: any) => {
+	type Pair = [number, string, boolean];
+	const distances = Object.keys(mrt.routes).reduce<{ [key: string]: number }>(
 		(accum, current) => ({
 			...accum,
 			[current]: Infinity,
 		}),
 		{}
 	);
-	const find = (x: StationID) => {
+	const find = (x: string) => {
 		let i = x;
-		const { interchanges } = mrtMap.entities;
+		const { interchanges } = mrt;
 		while (interchanges[i] !== i) {
-			i = interchanges[i] as StationID;
+			i = interchanges[i] as string;
 		}
 		return i;
 	};
 
-	const connected = (x: StationID, y: StationID) => {
-		const { interchanges } = mrtMap.entities;
+	const connected = (x: string, y: string) => {
+		const { interchanges } = mrt;
 		if (!interchanges[x] || !interchanges[y]) return false;
 		const root1 = find(x);
 		const root2 = find(y);
@@ -356,7 +351,7 @@ export const dijkstra: ShortestPathAlgo<StationID> = (
 
 	const pq = new Heap<Pair>([[0, start, false]], (a, b) => a[0] < b[0]);
 	distances[start] = 0;
-	const cameFrom: { [key: string]: StationID } = {};
+	const cameFrom: { [key: string]: string } = {};
 	cameFrom[start] = start;
 
 	while (pq.length) {
@@ -364,7 +359,7 @@ export const dijkstra: ShortestPathAlgo<StationID> = (
 		if (u === end || connected(u, end)) {
 			break;
 		}
-		for (const v of graph[u]) {
+		for (const v of mrt.routes[u]) {
 			const newCost = distance + 1;
 			if (connected(u, v) && interchangeMovement) {
 				continue;
@@ -390,14 +385,7 @@ export const ksp = (
 	end: StationID,
 	K: number
 ) => {
-	const ksp = yenAlgorithm<StationID>(
-		mrtMap.routes,
-		start,
-		end,
-		K,
-		{},
-		dijkstra
-	);
+	const ksp = yenAlgorithm(mrtMap, start, end, K, {}, dijkstra);
 
 	const all: Route[] = [];
 

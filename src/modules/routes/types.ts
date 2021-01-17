@@ -187,6 +187,10 @@ export interface LineData {
 	target: StationID;
 }
 
+export interface Mapping<V> {
+	[key: string]: V;
+}
+
 type StationMapping = {
 	[key in StationID]?: StationData;
 };

@@ -1,21 +1,13 @@
+import { Graph } from "@app/modules/routes/map";
 import { Heap } from "@app/modules/routes/utils";
 import isEqual from "lodash/isEqual";
-import cloneDeep from "lodash/cloneDeep";
 
-export interface Graph<V = any> {
-	[key: string]: V[];
-}
 interface ShortestPath {
 	path: string[];
 	cost: number;
 }
 
-export type ShortestPathAlgo<V extends String, M extends Object = {}> = (
-	graph: Graph<V>,
-	start: V,
-	end: V,
-	meta: M
-) => ShortestPath;
+export type ShortestPathAlgo = (...args: any[]) => ShortestPath;
 
 const reconstructPath = (
 	start: string,
@@ -38,13 +30,9 @@ const reconstructPath = (
 	return path.reverse();
 };
 
-const vanilaDijkstra: ShortestPathAlgo<string> = (
-	graph,
-	start,
-	end
-): ShortestPath => {
+const vanilaDijkstra: ShortestPathAlgo = (graph, start, end): ShortestPath => {
 	type Pair = [number, string];
-	const distances = Object.keys(graph).reduce<{ [key: string]: number }>(
+	const distances = Object.keys(graph.routes).reduce<{ [key: string]: number }>(
 		(accum, current) => ({
 			...accum,
 			[current]: Infinity,
@@ -61,7 +49,7 @@ const vanilaDijkstra: ShortestPathAlgo<string> = (
 		if (u === end) {
 			break;
 		}
-		for (const v of graph[u]) {
+		for (const v of graph.routes[u]) {
 			const newCost = distance + 1;
 			if (distances[v] > newCost) {
 				distances[v] = newCost;
@@ -77,13 +65,13 @@ const vanilaDijkstra: ShortestPathAlgo<string> = (
 		path,
 	};
 };
-export const yenAlgorithm = <V extends string, M extends Object = {}>(
-	graph: Graph<V>,
-	start: V,
-	end: V,
+export const yenAlgorithm = (
+	graph: Graph,
+	start: string,
+	end: string,
 	K: number,
-	meta: M,
-	shortestPathAlgorithm: ShortestPathAlgo<V, M> = vanilaDijkstra
+	meta: any,
+	shortestPathAlgorithm: ShortestPathAlgo = vanilaDijkstra
 ) => {
 	const ksp: ShortestPath[] = [];
 	const candidates = new Heap<ShortestPath>([], (a, b) => a.cost < b.cost);
@@ -95,23 +83,26 @@ export const yenAlgorithm = <V extends string, M extends Object = {}>(
 			const spurNode = ksp[k - 1].path[i];
 			const rootPath = ksp[k - 1].path.slice(0, i + 1);
 			const rootCost = rootPath.length - 1;
-			const graphClone = cloneDeep(graph);
+			const edgesRemoved: [string, string][] = [];
+			const nodesRemoved: { [key: string]: string[] } = {};
 			for (const shortestPath of ksp) {
 				if (
 					shortestPath.path.length > i &&
 					isEqual(rootPath, shortestPath.path.slice(0, i + 1))
 				) {
-					const edgeToBeRemovedIndex = graphClone[
+					const edgeToBeRemovedIndex = graph.routes[
 						shortestPath.path[i]
 					].findIndex((neighbor) => neighbor === shortestPath.path[i + 1]);
 					if (edgeToBeRemovedIndex !== -1) {
-						graphClone[shortestPath.path[i]].splice(edgeToBeRemovedIndex, 1);
+						edgesRemoved.push([shortestPath.path[i], shortestPath.path[i + 1]]);
+						graph.removeEdge(shortestPath.path[i], shortestPath.path[i + 1]);
 					}
 				}
 			}
 			for (const node of rootPath) {
 				if (node !== spurNode) {
-					delete graphClone[node];
+					nodesRemoved[node] = graph.routes[node];
+					graph.removeNode(node);
 				}
 			}
 
@@ -120,7 +111,7 @@ export const yenAlgorithm = <V extends string, M extends Object = {}>(
 			// spurPath = [c,d,e,f,g], spurCost = 4 (spurPath.length - 1)
 			// candidatePath = [a,b,c,d,e,f,g], candidateCost = 2 + 4 = 6
 			const { path: spurPath } = shortestPathAlgorithm(
-				graphClone,
+				graph,
 				spurNode as any,
 				end,
 				meta
@@ -144,6 +135,12 @@ export const yenAlgorithm = <V extends string, M extends Object = {}>(
 				if (!duplicate) {
 					candidates.push(candidateShortestPath);
 				}
+			}
+			for (const [u, v] of edgesRemoved) {
+				graph.addEdge(u, v);
+			}
+			for (const node in nodesRemoved) {
+				graph.addNode(node, nodesRemoved[node]);
 			}
 		}
 
