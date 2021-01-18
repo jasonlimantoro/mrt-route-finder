@@ -16,8 +16,6 @@ export const startServer = async () => {
 
 	app.get("/", (_req, res) => res.send("Hello World!"));
 
-	app.use(require("./routes").default);
-
 	const mrtMap = new MRT();
 	await mrtMap.init();
 
