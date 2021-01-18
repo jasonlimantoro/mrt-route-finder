@@ -296,7 +296,7 @@ export abstract class Graph<
 
 	edgeQuery;
 
-	constructor(routes: Mapping<string[]>, edgeQuery: new (e: E) => Q) {
+	constructor(routes: Mapping<string[]>, edgeQuery: new (e: E, d?: Date) => Q) {
 		this.routes = routes;
 		this.edgeQuery = edgeQuery;
 	}
@@ -379,7 +379,13 @@ export class MRT extends Graph<Line, LineQuery, Station> {
 
 	getLine(u: StationID, v: StationID) {
 		const lineId = constructLineId(u, v);
-		return this.edges[lineId];
+		return this.getEdge(lineId);
+	}
+
+	query(edgeId: string, currentTime?: Date) {
+		const edge = this.getEdge(edgeId);
+		const edgeQuery = new this.edgeQuery(edge, currentTime);
+		return edgeQuery;
 	}
 
 	computeCost(u: StationID, v: StationID, currentTime?: Date) {
