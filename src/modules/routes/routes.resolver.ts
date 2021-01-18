@@ -8,11 +8,14 @@ import {
 	Resolver,
 	Root,
 } from "type-graphql";
+import { Service } from "typedi";
+import { RouteService } from "./routes.service";
 import { RouteResponse, StationID, Route } from "./types";
-import { ksp } from "./utils";
 
+@Service()
 @Resolver(() => RouteResponse)
 export class RouteResolver {
+	constructor(private readonly routeService: RouteService) {}
 	@Query(() => RouteResponse)
 	async route(
 		@Arg("source") source: StationID,
@@ -20,8 +23,12 @@ export class RouteResolver {
 		@Arg("startTime", { nullable: true }) startTime: string,
 		@Ctx() ctx: MyContext
 	): Promise<RouteResponse> {
-		let allRoutes: Route[] = [];
-		allRoutes = ksp(ctx.mrt, source, target, 5, { startTime });
+		const allRoutes = this.routeService.recommendRoutes(
+			ctx.mrt,
+			source,
+			target,
+			startTime
+		);
 		return {
 			allRoutes,
 		};
