@@ -38,30 +38,27 @@ yarn start
 
 1. Query best route from station A to station B with minimum information without time cost
 
-```
+```graphql
 {
-	route(source: "EW28", target: "NS2") {
-		... on RouteResponseSuccess {
-			topRoute {
-				durationMinute
-				stops
-			}
-		}
-		... on RouteResponseError {
-			message
-		}
-	}
+  route(source: "EW28", target: "NS2") {
+    ... on RouteResponseSuccess {
+      topRoute {
+        durationMinute
+        stops
+      }
+    }
+    ... on RouteResponseError {
+      message
+    }
+  }
 }
 ```
 
 2. Query best route from station A to station B with instruction without time cost
 
-```
+```graphql
 {
-  route(
-    source: "EW28"
-    target: "NS2"
-  ) {
+  route(source: "EW28", target: "NS2") {
     ... on RouteResponseSuccess {
       topRoute {
         durationMinute
@@ -81,14 +78,9 @@ yarn start
 
 3. Query best route from station A to Station B with time cost without instruction
 
-```
+```graphql
 {
-  route(
-    source: "EW16"
-    target: "NS23"
-    startTime: "2021-01-14T06:40+08:00"
-  )
-  {
+  route(source: "EW16", target: "NS23", startTime: "2021-01-14T06:40+08:00") {
     ... on RouteResponseSuccess {
       topRoute {
         arrivalTime
@@ -106,14 +98,9 @@ yarn start
 
 4. Query best route from station A to station B with time cost and instruction
 
-```
+```graphql
 {
-  route(
-    source: "EW16"
-    target: "NS23"
-    startTime: "2021-01-14T06:40+08:00"
-  )
-  {
+  route(source: "EW16", target: "NS23", startTime: "2021-01-14T06:40+08:00") {
     ... on RouteResponseSuccess {
       topRoute {
         arrivalTime
@@ -138,14 +125,9 @@ yarn start
 
 5. Query best route **and** alternative routes (up to 4) with detailed instruction at every routes
 
-```
+```graphql
 {
-  route(
-    source: "EW16"
-    target: "NS23"
-    startTime: "2021-01-14T06:40+08:00"
-  )
-  {
+  route(source: "EW16", target: "NS23", startTime: "2021-01-14T06:40+08:00") {
     ... on RouteResponseSuccess {
       topRoute {
         arrivalTime
