@@ -1,5 +1,5 @@
 import { parse } from "@app/data/dataParser";
-import { Edge, EdgeQuery, Node } from "@app/lib/graph";
+import { Graph } from "@app/lib/graph";
 import { Line, LineFactory, LineQuery } from "./line";
 import { Station, StationFactory } from "./station";
 import { Mapping, MrtMap, StationID, StationType } from "./types";
@@ -283,47 +283,6 @@ export const mrtMap: MrtMap = {
 	},
 };
 
-export abstract class Graph<
-	E extends Edge<N>,
-	Q extends EdgeQuery<N, E>,
-	N extends Node
-> {
-	routes;
-
-	nodes: Mapping<N>;
-
-	edges: Mapping<E>;
-
-	edgeQuery;
-
-	constructor(routes: Mapping<string[]>, edgeQuery: new (e: E, d?: Date) => Q) {
-		this.routes = routes;
-		this.edgeQuery = edgeQuery;
-	}
-	addEdge(u: string, v: string) {
-		this.routes[u].push(v);
-	}
-	addNode(u: string, neighbors: string[]) {
-		this.routes[u] = neighbors;
-	}
-	removeEdge(u: string, v: string) {
-		this.routes[u] = this.routes[u].filter((nei) => nei !== v);
-	}
-	removeNode(u: string) {
-		delete this.routes[u];
-	}
-	getEdge(id: string) {
-		return this.edges[id];
-	}
-
-	query(edgeId: string) {
-		const edgeQuery = new this.edgeQuery(this.getEdge(edgeId));
-		return edgeQuery;
-	}
-	abstract computeCost(u: string, v: string): number;
-
-	abstract computeCostPaths(edgeQueries: Q[]): number;
-}
 export class MRT extends Graph<Line, LineQuery, Station> {
 	interchanges;
 
@@ -390,14 +349,29 @@ export class MRT extends Graph<Line, LineQuery, Station> {
 
 	computeCost(u: StationID, v: StationID, currentTime?: Date) {
 		const lineQuery = new LineQuery(this.getLine(u, v), currentTime);
-		return lineQuery.computeDuration();
+		return lineQuery.computeCost();
 	}
 
 	computeCostPaths(lineQueries: LineQuery[]) {
 		return lineQueries.reduce(
 			(totalDuration, currentLineQuery) =>
-				totalDuration + currentLineQuery.computeDuration(),
+				totalDuration + currentLineQuery.computeCost(),
 			0
 		);
+	}
+
+	private findInterchangeRoot(u: string) {
+		let i = u;
+		const { interchanges } = this;
+		while (interchanges[i] !== i) {
+			i = interchanges[i] as string;
+		}
+		return i;
+	}
+
+	interchangeConnected(u: string, v: string) {
+		const { interchanges } = this;
+		if (!interchanges[u] || !interchanges[v]) return false;
+		return this.findInterchangeRoot(u) === this.findInterchangeRoot(v);
 	}
 }

@@ -1,6 +1,5 @@
 import { yenAlgorithm } from "@app/lib/algorithm";
-import { Graph } from "@app/modules/routes/map";
-import { Edge, EdgeQuery, Node } from "@app/lib/graph";
+import { Edge, EdgeQuery, Node, Graph } from "@app/lib/graph";
 
 class CustomNode extends Node {
 	constructor(id: string) {

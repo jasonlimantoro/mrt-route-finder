@@ -3,11 +3,11 @@ import {
 	InterchangeLine,
 	LineQuery,
 } from "@app/modules/routes/line";
-import { Graph, MRT } from "@app/modules/routes/map";
+import { MRT } from "@app/modules/routes/map";
 import { Route, StationID } from "@app/modules/routes/types";
 import { addMinutes, constructLineId } from "@app/modules/routes/utils";
 import isEqual from "lodash/isEqual";
-import { Edge, EdgeQuery, Node } from "./graph";
+import { Edge, EdgeQuery, Node, Graph } from "./graph";
 import { Heap } from "./heap";
 
 interface ShortestPath<Q> {
@@ -233,7 +233,7 @@ export const dijkstra2 = (
 		for (const neighbor of mrt.routes[currentStation] || []) {
 			const line = mrt.getLine(currentStation, neighbor as StationID);
 			const lineQuery = new LineQuery(line, currentTime);
-			const cost = lineQuery.computeDuration();
+			const cost = lineQuery.computeCost();
 			// Don't wait two times consecutively in station interchanges like Dhoby Ghout
 			if (
 				lastLineQuery?.line instanceof InterchangeLine &&

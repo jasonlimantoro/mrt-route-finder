@@ -1,5 +1,47 @@
+import { Mapping } from "@app/modules/routes/types";
 import { addMinutes } from "@app/modules/routes/utils";
 
+export abstract class Graph<
+	E extends Edge<N>,
+	Q extends EdgeQuery<N, E>,
+	N extends Node
+> {
+	routes;
+
+	nodes: Mapping<N>;
+
+	edges: Mapping<E>;
+
+	edgeQuery;
+
+	constructor(routes: Mapping<string[]>, edgeQuery: new (e: E, d?: Date) => Q) {
+		this.routes = routes;
+		this.edgeQuery = edgeQuery;
+	}
+	addEdge(u: string, v: string) {
+		this.routes[u].push(v);
+	}
+	addNode(u: string, neighbors: string[]) {
+		this.routes[u] = neighbors;
+	}
+	removeEdge(u: string, v: string) {
+		this.routes[u] = this.routes[u].filter((nei) => nei !== v);
+	}
+	removeNode(u: string) {
+		delete this.routes[u];
+	}
+	getEdge(id: string) {
+		return this.edges[id];
+	}
+
+	query(edgeId: string) {
+		const edgeQuery = new this.edgeQuery(this.getEdge(edgeId));
+		return edgeQuery;
+	}
+	abstract computeCost(u: string, v: string): number;
+
+	abstract computeCostPaths(edgeQueries: Q[]): number;
+}
 export abstract class Node {
 	id;
 	constructor(id: string) {
