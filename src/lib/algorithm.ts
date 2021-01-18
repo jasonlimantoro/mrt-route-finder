@@ -246,6 +246,10 @@ export const dijkstra2 = (
 				continue;
 			}
 
+			if (!lineQuery.isOperating()) {
+				continue;
+			}
+
 			let newTime = currentTime ? addMinutes(currentTime, cost) : undefined;
 			if (!isVisited(neighbor, pathsSoFar)) {
 				const newCost = distance + cost;
@@ -340,6 +344,9 @@ export const dijkstra = (
 				continue;
 			}
 			if (!lineQuery.hasTargetOpened()) {
+				continue;
+			}
+			if (!lineQuery.isOperating()) {
 				continue;
 			}
 			if (distances[v] > newCost) {
