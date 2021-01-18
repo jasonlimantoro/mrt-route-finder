@@ -1,5 +1,7 @@
 # MRT Route Finder
 
+![](assets/demo.gif)
+
 ## Tech stack
 
 - Node.js
