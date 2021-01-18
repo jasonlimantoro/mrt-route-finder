@@ -1,7 +1,7 @@
+import { ksp } from "@app/lib/algorithm";
 import { Service } from "typedi";
 import { MRT } from "./map";
 import { StationID } from "./types";
-import { ksp } from "./utils";
 
 @Service()
 export class RouteService {

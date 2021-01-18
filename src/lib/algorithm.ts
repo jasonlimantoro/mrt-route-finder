@@ -1,7 +1,14 @@
-import { Graph } from "@app/modules/routes/map";
-import { Heap } from "@app/modules/routes/utils";
+import {
+	InstructionLine,
+	InterchangeLine,
+	LineQuery,
+} from "@app/modules/routes/line";
+import { Graph, MRT } from "@app/modules/routes/map";
+import { Route, StationID } from "@app/modules/routes/types";
+import { addMinutes, constructLineId } from "@app/modules/routes/utils";
 import isEqual from "lodash/isEqual";
 import { Edge, EdgeQuery, Node } from "./graph";
+import { Heap } from "./heap";
 
 interface ShortestPath<Q> {
 	path: string[];
@@ -157,4 +164,240 @@ export const yenAlgorithm = <
 		ksp.push(kthShortestPath);
 	}
 	return ksp;
+};
+
+export const dijkstra2 = (
+	mrt: MRT,
+	start: StationID,
+	end: StationID,
+	startTime?: string
+): Route[] => {
+	type Pair = [number, StationID, LineQuery[], Date?];
+	interface Path {
+		routes: LineQuery[];
+		duration: number;
+	}
+	const startTimeObject = startTime ? new Date(startTime) : undefined;
+	const pq = new Heap<Pair>(
+		[[0, start, [], startTimeObject]],
+		(a, b) => a[0] < b[0]
+	);
+	const allPossiblePaths: Path[] = [];
+
+	const isVisited = (station: string, paths: LineQuery[]) => {
+		for (const p of paths) {
+			if (p.line.target.id === station || p.line.source.id === station) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	const find = (x: StationID) => {
+		let i = x;
+		const { interchanges } = mrt;
+		while (interchanges[i] !== i) {
+			i = interchanges[i] as StationID;
+		}
+		return i;
+	};
+
+	const connected = (x: StationID, y: StationID) => {
+		const { interchanges } = mrt;
+		if (!interchanges[x] || !interchanges[y]) return false;
+		const root1 = find(x);
+		const root2 = find(y);
+		return root1 === root2;
+	};
+
+	// It's hard to say what the upper bound is
+	// One idea: since this limits to only 5 shortest paths, then the worst complexity would be 5 * O(Dijkstra)
+	// O(Dijkstra) = O(V^2), V is the number of vertices
+	// Though it is not tight bound, it's sufficient to find 5 paths
+	const MAX_BOUND = 5 * 200 * 200;
+	let i = 0;
+	while (pq.length) {
+		i++;
+		if (i > MAX_BOUND) {
+			break;
+		}
+		const [distance, currentStation, pathsSoFar, currentTime] = pq.pop();
+		if (currentStation === end || connected(currentStation, end)) {
+			allPossiblePaths.push({ routes: pathsSoFar, duration: distance });
+			continue;
+		}
+		if (allPossiblePaths.length >= 5) {
+			break;
+		}
+		const lastLineQuery = pathsSoFar[pathsSoFar.length - 1];
+		for (const neighbor of mrt.routes[currentStation] || []) {
+			const line = mrt.getLine(currentStation, neighbor as StationID);
+			const lineQuery = new LineQuery(line, currentTime);
+			const cost = lineQuery.computeDuration();
+			// Don't wait two times consecutively in station interchanges like Dhoby Ghout
+			if (
+				lastLineQuery?.line instanceof InterchangeLine &&
+				lineQuery.line instanceof InterchangeLine
+			) {
+				continue;
+			}
+
+			if (!lineQuery.hasTargetOpened()) {
+				continue;
+			}
+
+			let newTime = currentTime ? addMinutes(currentTime, cost) : undefined;
+			if (!isVisited(neighbor, pathsSoFar)) {
+				const newCost = distance + cost;
+				pq.push([
+					newCost,
+					neighbor as StationID,
+					[...pathsSoFar, lineQuery],
+					newTime,
+				]);
+			}
+		}
+	}
+	const allPossiblePathsWithInstructions = allPossiblePaths.map(
+		({ routes, duration: durationMinute }) => {
+			return {
+				instructions: routes.map((lineQuery) =>
+					new InstructionLine(lineQuery).getInstruction()
+				),
+				stops: [start, ...routes.map((lineQuery) => lineQuery.line.target.id)],
+				durationMinute: startTimeObject ? durationMinute : undefined,
+				numberOfStops: routes.length,
+				arrivalTime: startTimeObject
+					? addMinutes(startTimeObject, durationMinute).toLocaleTimeString()
+					: undefined,
+			};
+		}
+	);
+	return allPossiblePathsWithInstructions;
+};
+
+export const dijkstra = (
+	mrt: MRT,
+	start: string,
+	end: string,
+	meta: { startTime?: string }
+) => {
+	type Pair = [number, string, boolean, LineQuery[], Date?];
+	const distances = Object.keys(mrt.routes).reduce<{ [key: string]: number }>(
+		(accum, current) => ({
+			...accum,
+			[current]: Infinity,
+		}),
+		{}
+	);
+	const find = (x: string) => {
+		let i = x;
+		const { interchanges } = mrt;
+		while (interchanges[i] !== i) {
+			i = interchanges[i] as string;
+		}
+		return i;
+	};
+
+	const connected = (x: string, y: string) => {
+		const { interchanges } = mrt;
+		if (!interchanges[x] || !interchanges[y]) return false;
+		const root1 = find(x);
+		const root2 = find(y);
+		return root1 === root2;
+	};
+	const startTimeObject = meta.startTime ? new Date(meta.startTime) : undefined;
+	const pq = new Heap<Pair>(
+		[[0, start, false, [], startTimeObject]],
+		(a, b) => a[0] < b[0]
+	);
+	distances[start] = 0;
+	const cameFrom: { [key: string]: [string, LineQuery?] } = {};
+	cameFrom[start] = [start];
+	let allLineQueries: LineQuery[] = [];
+
+	while (pq.length) {
+		const [
+			distance,
+			u,
+			interchangeMovement,
+			lineQueries,
+			currentTime,
+		] = pq.pop();
+		if (u === end || connected(u, end)) {
+			allLineQueries = lineQueries;
+			break;
+		}
+		for (const v of mrt.routes[u]) {
+			const lineQuery = mrt.query(constructLineId(u, v), currentTime);
+			const cost = lineQuery.computeDuration();
+			let newTime;
+			if (currentTime) {
+				newTime = addMinutes(currentTime, cost);
+			}
+			const newCost = distance + cost;
+			if (connected(u, v) && interchangeMovement) {
+				continue;
+			}
+			if (!lineQuery.hasTargetOpened()) {
+				continue;
+			}
+			if (distances[v] > newCost) {
+				distances[v] = newCost;
+				cameFrom[v] = [u, lineQuery];
+				pq.push([
+					newCost,
+					v,
+					connected(u, v),
+					[...lineQueries, lineQuery],
+					newTime,
+				]);
+			}
+		}
+	}
+	if (allLineQueries.length > 0) {
+		const path = [start];
+		for (const lineQuery of allLineQueries) {
+			path.push(lineQuery.line.target.id);
+		}
+		return {
+			cost: mrt.computeCostPaths(allLineQueries),
+			path,
+			edges: allLineQueries,
+		};
+	}
+	return {
+		cost: Infinity,
+		path: [],
+		edges: [],
+	};
+};
+
+export const ksp = (
+	mrtMap: MRT,
+	start: StationID,
+	end: StationID,
+	K: number,
+	meta: {
+		startTime?: string;
+	}
+) => {
+	const ksp = yenAlgorithm(mrtMap, start, end, K, meta, dijkstra);
+
+	const all: Route[] = [];
+
+	for (const sp of ksp) {
+		all.push({
+			instructions: sp.edges.map((lq) =>
+				new InstructionLine(lq).getInstruction()
+			),
+			durationMinute: sp.cost,
+			numberOfStops: sp.path.length - 1,
+			stops: sp.path,
+			arrivalTime: meta.startTime
+				? addMinutes(new Date(meta.startTime), sp.cost).toLocaleTimeString()
+				: undefined,
+		});
+	}
+	return all;
 };
