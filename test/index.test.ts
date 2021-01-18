@@ -246,4 +246,44 @@ describe("Top Route", () => {
 		}
 	`);
 	});
+
+	it("City Hall (EW13) to Paya Lebar (CC9): stop at green line is fine (EW8)", async () => {
+		const response = await request(app)
+			.post("/graphql")
+			.send({
+				query: `
+			{
+				route(
+					source: "EW13"
+					target: "CC9"
+					startTime: "2021-01-14T06:40+08:00"
+				)
+				{
+					... on RouteResponseSuccess {
+						topRoute {
+							durationMinute
+							numberOfStops
+							stops
+						}
+					}
+				}
+			}
+		`,
+			})
+			.expect(200);
+		expect(response.body.data.route.topRoute).toMatchInlineSnapshot(`
+		Object {
+		  "durationMinute": 50,
+		  "numberOfStops": 5,
+		  "stops": Array [
+		    "EW13",
+		    "EW12",
+		    "EW11",
+		    "EW10",
+		    "EW9",
+		    "EW8",
+		  ],
+		}
+	`);
+	});
 });

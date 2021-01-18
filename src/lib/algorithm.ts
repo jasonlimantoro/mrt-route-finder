@@ -294,22 +294,6 @@ export const dijkstra = (
 		}),
 		{}
 	);
-	const find = (x: string) => {
-		let i = x;
-		const { interchanges } = mrt;
-		while (interchanges[i] !== i) {
-			i = interchanges[i] as string;
-		}
-		return i;
-	};
-
-	const connected = (x: string, y: string) => {
-		const { interchanges } = mrt;
-		if (!interchanges[x] || !interchanges[y]) return false;
-		const root1 = find(x);
-		const root2 = find(y);
-		return root1 === root2;
-	};
 	const startTimeObject = meta.startTime ? new Date(meta.startTime) : undefined;
 	const pq = new Heap<Pair>(
 		[[0, start, false, [], startTimeObject]],
@@ -318,7 +302,6 @@ export const dijkstra = (
 	distances[start] = 0;
 	const cameFrom: { [key: string]: [string, LineQuery?] } = {};
 	cameFrom[start] = [start];
-	let allLineQueries: LineQuery[] = [];
 
 	while (pq.length) {
 		const [
@@ -328,19 +311,26 @@ export const dijkstra = (
 			lineQueries,
 			currentTime,
 		] = pq.pop();
-		if (u === end || connected(u, end)) {
-			allLineQueries = lineQueries;
-			break;
+		if (u === end || mrt.interchangeConnected(u, end)) {
+			const path = [start];
+			for (const lineQuery of lineQueries) {
+				path.push(lineQuery.line.target.id);
+			}
+			return {
+				cost: mrt.computeCostPaths(lineQueries),
+				path,
+				edges: lineQueries,
+			};
 		}
 		for (const v of mrt.routes[u]) {
 			const lineQuery = mrt.query(constructLineId(u, v), currentTime);
-			const cost = lineQuery.computeDuration();
+			const cost = lineQuery.computeCost();
 			let newTime;
 			if (currentTime) {
 				newTime = addMinutes(currentTime, cost);
 			}
 			const newCost = distance + cost;
-			if (connected(u, v) && interchangeMovement) {
+			if (mrt.interchangeConnected(u, v) && interchangeMovement) {
 				continue;
 			}
 			if (!lineQuery.hasTargetOpened()) {
@@ -355,23 +345,12 @@ export const dijkstra = (
 				pq.push([
 					newCost,
 					v,
-					connected(u, v),
+					mrt.interchangeConnected(u, v),
 					[...lineQueries, lineQuery],
 					newTime,
 				]);
 			}
 		}
-	}
-	if (allLineQueries.length > 0) {
-		const path = [start];
-		for (const lineQuery of allLineQueries) {
-			path.push(lineQuery.line.target.id);
-		}
-		return {
-			cost: mrt.computeCostPaths(allLineQueries),
-			path,
-			edges: allLineQueries,
-		};
 	}
 	return {
 		cost: Infinity,
