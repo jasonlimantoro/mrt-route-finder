@@ -1,21 +1,13 @@
+import { Edge, EdgeQuery } from "@app/lib/graph";
 import { Station } from "./station";
 import { Instruction, StationType } from "./types";
-import { isNight, isPeak } from "./utils";
+import { addMinutes, isNight, isPeak } from "./utils";
 
-export abstract class Line {
-	id;
-
-	source;
-
-	target;
-
+export abstract class Line extends Edge<Station> {
 	constructor(id: string, source: Station, target: Station) {
-		this.id = id;
-		this.source = source;
-		this.target = target;
+		super(id, source, target);
 	}
 
-	abstract computeDuration(currentTime: Date): number;
 	abstract isOperating(currentTime: Date): boolean;
 }
 
@@ -181,14 +173,19 @@ export class LineFactory {
 	};
 }
 
-export class LineQuery {
+export class LineQuery extends EdgeQuery<Station, Line> {
 	line;
 
-	currentTime?: Date;
-
 	constructor(line: Line, currentTime?: Date) {
+		super(line, currentTime);
 		this.line = line;
-		this.currentTime = currentTime;
+	}
+
+	get endTime() {
+		if (this.currentTime) {
+			return addMinutes(this.currentTime, this.computeDuration());
+		}
+		return null;
 	}
 
 	computeDuration() {
@@ -204,24 +201,31 @@ export class LineQuery {
 		}
 		return true;
 	}
+
+	isOperating() {
+		if (this.currentTime) {
+			return this.line.isOperating(this.currentTime);
+		}
+		return true;
+	}
 }
 
 export class InstructionLine {
 	lineQuery;
 
-	constructor(lineQuery: LineQuery) {
+	constructor(lineQuery: EdgeQuery<Station, Edge<Station>>) {
 		this.lineQuery = lineQuery;
 	}
 
 	getInstruction = (): Instruction => {
-		const { source, target } = this.lineQuery.line;
+		const { source, target } = this.lineQuery.edge;
 		const meta = {
 			currentTime: this.lineQuery.currentTime?.toLocaleTimeString(),
-			cost: this.lineQuery.computeDuration(),
+			cost: this.lineQuery.computeCost(),
 			from: source.id,
 			to: target.id,
 		};
-		if (this.lineQuery.line instanceof InterchangeLine) {
+		if (this.lineQuery.edge instanceof InterchangeLine) {
 			return {
 				text: `Change to ${target.data.line} at ${target.data.name}`,
 				meta,

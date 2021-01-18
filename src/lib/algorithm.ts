@@ -1,37 +1,26 @@
 import { Graph } from "@app/modules/routes/map";
 import { Heap } from "@app/modules/routes/utils";
 import isEqual from "lodash/isEqual";
+import { Edge, EdgeQuery, Node } from "./graph";
 
-interface ShortestPath {
+interface ShortestPath<Q> {
 	path: string[];
 	cost: number;
+	edges: Q[];
 }
 
-export type ShortestPathAlgo = (...args: any[]) => ShortestPath;
+export type ShortestPathAlgo<Q> = (...args: any[]) => ShortestPath<Q>;
 
-const reconstructPath = (
+const vanilaDijkstra = <
+	E extends Edge<N>,
+	Q extends EdgeQuery<N, E>,
+	N extends Node
+>(
+	graph: Graph<E, Q, N>,
 	start: string,
-	end: string,
-	cameFrom: { [key: string]: string }
-) => {
-	const path: string[] = [];
-	let current = end;
-
-	while (current !== start) {
-		if (!current) {
-			return [];
-		}
-		path.push(current);
-		current = cameFrom[current];
-	}
-
-	path.push(start);
-
-	return path.reverse();
-};
-
-const vanilaDijkstra: ShortestPathAlgo = (graph, start, end): ShortestPath => {
-	type Pair = [number, string];
+	end: string
+): ShortestPath<Q> => {
+	type Pair = [number, string, Q[]];
 	const distances = Object.keys(graph.routes).reduce<{ [key: string]: number }>(
 		(accum, current) => ({
 			...accum,
@@ -39,50 +28,67 @@ const vanilaDijkstra: ShortestPathAlgo = (graph, start, end): ShortestPath => {
 		}),
 		{}
 	);
-	const pq = new Heap<Pair>([[0, start]], (a, b) => a[0] < b[0]);
+	const pq = new Heap<Pair>([[0, start, []]], (a, b) => a[0] < b[0]);
 	distances[start] = 0;
 	const cameFrom: { [key: string]: string } = {};
 	cameFrom[start] = start;
-
+	let allQueries: Q[] = [];
 	while (pq.length) {
-		const [distance, u] = pq.pop();
+		const [distance, u, currentEdgeQueries] = pq.pop();
 		if (u === end) {
+			allQueries = currentEdgeQueries;
 			break;
 		}
 		for (const v of graph.routes[u]) {
-			const newCost = distance + 1;
+			const edgeQuery = graph.query(`${u}-${v}`);
+			const newCost = distance + edgeQuery.computeCost();
 			if (distances[v] > newCost) {
 				distances[v] = newCost;
 				cameFrom[v] = u;
-				pq.push([newCost, v]);
+				pq.push([newCost, v, [...currentEdgeQueries, edgeQuery]]);
 			}
 		}
 	}
-	const path = reconstructPath(start, end, cameFrom);
-
+	if (allQueries.length > 0) {
+		const path = [start];
+		for (const edgeQuery of allQueries) {
+			path.push(edgeQuery.edge.target.id);
+		}
+		return {
+			cost: graph.computeCostPaths(allQueries),
+			path,
+			edges: allQueries,
+		};
+	}
 	return {
-		cost: path.length - 1,
-		path,
+		cost: Infinity,
+		path: [],
+		edges: [],
 	};
 };
-export const yenAlgorithm = (
-	graph: Graph,
+export const yenAlgorithm = <
+	E extends Edge<N>,
+	Q extends EdgeQuery<Node, E>,
+	N extends Node
+>(
+	graph: Graph<E, Q, N>,
 	start: string,
 	end: string,
 	K: number,
 	meta: any,
-	shortestPathAlgorithm: ShortestPathAlgo = vanilaDijkstra
+	shortestPathAlgorithm: ShortestPathAlgo<Q> = vanilaDijkstra
 ) => {
-	const ksp: ShortestPath[] = [];
-	const candidates = new Heap<ShortestPath>([], (a, b) => a.cost < b.cost);
-	const { path, cost } = shortestPathAlgorithm(graph, start, end, meta);
-	ksp[0] = { path, cost };
+	const ksp: ShortestPath<Q>[] = [];
+	const candidates = new Heap<ShortestPath<Q>>([], (a, b) => a.cost < b.cost);
+	const { path, cost, edges } = shortestPathAlgorithm(graph, start, end, meta);
+	ksp[0] = { path, cost, edges };
 	for (let k = 1; k < K; k++) {
 		// find the cut (a.k.a spur node)
 		for (let i = 0; i < ksp[k - 1].path.length - 1; i++) {
 			const spurNode = ksp[k - 1].path[i];
+			const spurEdge = ksp[k - 1].edges[i - 1];
 			const rootPath = ksp[k - 1].path.slice(0, i + 1);
-			const rootCost = rootPath.length - 1;
+			const rootEdges = ksp[k - 1].edges.slice(0, i);
 			const edgesRemoved: [string, string][] = [];
 			const nodesRemoved: { [key: string]: string[] } = {};
 			for (const shortestPath of ksp) {
@@ -106,25 +112,24 @@ export const yenAlgorithm = (
 				}
 			}
 
-			// a -> b -> c (spur node) -> d -> e -> f -> g
-			// rootPath = [a,b,c], rootCost = 2 (rootPath.length - 1)
-			// spurPath = [c,d,e,f,g], spurCost = 4 (spurPath.length - 1)
-			// candidatePath = [a,b,c,d,e,f,g], candidateCost = 2 + 4 = 6
-			const { path: spurPath } = shortestPathAlgorithm(
+			const { path: spurPath, edges: spurEdges } = shortestPathAlgorithm(
 				graph,
-				spurNode as any,
+				spurNode,
 				end,
-				meta
+				{
+					startTime: spurEdge ? spurEdge.endTime : meta.startTime,
+				}
 			);
 			if (spurPath.length > 0) {
-				const spurCost = spurPath.length - 1; // V - 1 edges for path with V nodes
 				const candidatePath = [
 					...rootPath.slice(0, rootPath.length - 1),
 					...spurPath,
 				];
-				const candidateShortestPath: ShortestPath = {
+				const candidateEdges = [...rootEdges, ...spurEdges];
+				const candidateShortestPath: ShortestPath<Q> = {
 					path: candidatePath,
-					cost: rootCost + spurCost,
+					cost: graph.computeCostPaths(candidateEdges),
+					edges: candidateEdges,
 				};
 				const duplicate =
 					candidates.values.findIndex(

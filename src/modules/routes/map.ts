@@ -1,4 +1,5 @@
 import { parse } from "@app/data/dataParser";
+import { Edge, EdgeQuery, Node } from "@app/lib/graph";
 import { Line, LineFactory, LineQuery } from "./line";
 import { Station, StationFactory } from "./station";
 import { Mapping, MrtMap, StationID, StationType } from "./types";
@@ -282,15 +283,22 @@ export const mrtMap: MrtMap = {
 	},
 };
 
-export abstract class Graph<N = any, E = any> {
+export abstract class Graph<
+	E extends Edge<N>,
+	Q extends EdgeQuery<N, E>,
+	N extends Node
+> {
 	routes;
 
 	nodes: Mapping<N>;
 
 	edges: Mapping<E>;
 
-	constructor(routes: Mapping<string[]>) {
+	edgeQuery;
+
+	constructor(routes: Mapping<string[]>, edgeQuery: new (e: E) => Q) {
 		this.routes = routes;
+		this.edgeQuery = edgeQuery;
 	}
 	addEdge(u: string, v: string) {
 		this.routes[u].push(v);
@@ -304,20 +312,26 @@ export abstract class Graph<N = any, E = any> {
 	removeNode(u: string) {
 		delete this.routes[u];
 	}
+	getEdge(id: string) {
+		return this.edges[id];
+	}
+
+	query(edgeId: string) {
+		const edgeQuery = new this.edgeQuery(this.getEdge(edgeId));
+		return edgeQuery;
+	}
 	abstract computeCost(u: string, v: string): number;
+
+	abstract computeCostPaths(edgeQueries: Q[]): number;
 }
-export class MRT extends Graph {
+export class MRT extends Graph<Line, LineQuery, Station> {
 	interchanges;
-
-	lines: Mapping<Line>;
-
-	stations: Mapping<Station>;
 
 	constructor(
 		routes: Mapping<string[]> = mrtMap.routes,
 		interChanges: Mapping<string | undefined> = mrtMap.entities.interchanges
 	) {
-		super(routes);
+		super(routes, LineQuery);
 		this.interchanges = interChanges;
 	}
 
@@ -359,13 +373,13 @@ export class MRT extends Graph {
 				lines[lineId] = line;
 			}
 		}
-		this.stations = stations;
-		this.lines = lines;
+		this.nodes = stations;
+		this.edges = lines;
 	}
 
 	getLine(u: StationID, v: StationID) {
 		const lineId = constructLineId(u, v);
-		return this.lines[lineId];
+		return this.edges[lineId];
 	}
 
 	computeCost(u: StationID, v: StationID, currentTime?: Date) {
@@ -373,11 +387,11 @@ export class MRT extends Graph {
 		return lineQuery.computeDuration();
 	}
 
-	computeCostPaths(stations: StationID[], currentTime?: Date) {
-		let totalCost = 0;
-		for (let i = 1; i < stations.length; i++) {
-			totalCost += this.computeCost(stations[i - 1], stations[i], currentTime);
-		}
-		return totalCost;
+	computeCostPaths(lineQueries: LineQuery[]) {
+		return lineQueries.reduce(
+			(totalDuration, currentLineQuery) =>
+				totalDuration + currentLineQuery.computeDuration(),
+			0
+		);
 	}
 }

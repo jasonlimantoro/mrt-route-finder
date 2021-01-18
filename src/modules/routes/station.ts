@@ -1,14 +1,13 @@
 import { Color, StationData, StationType } from "./types";
+import { Node } from "@app/lib/graph";
 
-export abstract class Station {
-	id;
-
+export abstract class Station extends Node {
 	data;
 
 	color: Color;
 
 	constructor(id: string, data: StationData) {
-		this.id = id;
+		super(id);
 		this.data = data;
 	}
 

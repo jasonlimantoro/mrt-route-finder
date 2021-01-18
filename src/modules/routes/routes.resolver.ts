@@ -9,7 +9,7 @@ import {
 	Root,
 } from "type-graphql";
 import { RouteResponse, StationID, Route } from "./types";
-import { dijkstra2, ksp } from "./utils";
+import { ksp } from "./utils";
 
 @Resolver(() => RouteResponse)
 export class RouteResolver {
@@ -21,11 +21,7 @@ export class RouteResolver {
 		@Ctx() ctx: MyContext
 	): Promise<RouteResponse> {
 		let allRoutes: Route[] = [];
-		if (startTime) {
-			allRoutes = dijkstra2(ctx.mrt, source, target, startTime);
-		} else {
-			allRoutes = ksp(ctx.mrt, source, target, 5);
-		}
+		allRoutes = ksp(ctx.mrt, source, target, 5, { startTime });
 		return {
 			allRoutes,
 		};

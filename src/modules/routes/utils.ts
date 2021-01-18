@@ -186,7 +186,7 @@ export const dijksta = (
 	return { paths, duration, instructions };
 };
 
-const addMinutes = (startTime: Date, minutes: number) => {
+export const addMinutes = (startTime: Date, minutes: number) => {
 	const newTime = new Date(startTime);
 	newTime.setMinutes(newTime.getMinutes() + minutes);
 	return newTime;
@@ -302,29 +302,13 @@ export const dijkstra2 = (
 	return allPossiblePathsWithInstructions;
 };
 
-const constructPath = (
+export const dijkstra = (
+	mrt: MRT,
 	start: string,
 	end: string,
-	cameFrom: { [key: string]: string }
+	meta: { startTime?: string }
 ) => {
-	const path: string[] = [];
-	let current = end;
-
-	while (current !== start) {
-		if (!current) {
-			return [];
-		}
-		path.push(current);
-		current = cameFrom[current];
-	}
-
-	path.push(start);
-
-	return path.reverse();
-};
-
-export const dijkstra = (mrt: MRT, start: string, end: string, _meta: any) => {
-	type Pair = [number, string, boolean];
+	type Pair = [number, string, boolean, LineQuery[], Date?];
 	const distances = Object.keys(mrt.routes).reduce<{ [key: string]: number }>(
 		(accum, current) => ({
 			...accum,
@@ -348,34 +332,68 @@ export const dijkstra = (mrt: MRT, start: string, end: string, _meta: any) => {
 		const root2 = find(y);
 		return root1 === root2;
 	};
-
-	const pq = new Heap<Pair>([[0, start, false]], (a, b) => a[0] < b[0]);
+	const startTimeObject = meta.startTime ? new Date(meta.startTime) : undefined;
+	const pq = new Heap<Pair>(
+		[[0, start, false, [], startTimeObject]],
+		(a, b) => a[0] < b[0]
+	);
 	distances[start] = 0;
-	const cameFrom: { [key: string]: string } = {};
-	cameFrom[start] = start;
+	const cameFrom: { [key: string]: [string, LineQuery?] } = {};
+	cameFrom[start] = [start];
+	let allLineQueries: LineQuery[] = [];
 
 	while (pq.length) {
-		const [distance, u, interchangeMovement] = pq.pop();
+		const [
+			distance,
+			u,
+			interchangeMovement,
+			lineQueries,
+			currentTime,
+		] = pq.pop();
 		if (u === end || connected(u, end)) {
+			allLineQueries = lineQueries;
 			break;
 		}
 		for (const v of mrt.routes[u]) {
-			const newCost = distance + 1;
+			const line = mrt.getLine(u as StationID, v as StationID);
+			const lineQuery = new LineQuery(line, currentTime);
+			const cost = lineQuery.computeDuration();
+			let newTime;
+			if (currentTime) {
+				newTime = addMinutes(currentTime, cost);
+			}
+			const newCost = distance + cost;
 			if (connected(u, v) && interchangeMovement) {
 				continue;
 			}
 			if (distances[v] > newCost) {
 				distances[v] = newCost;
-				cameFrom[v] = u;
-				pq.push([newCost, v, connected(u, v)]);
+				cameFrom[v] = [u, lineQuery];
+				pq.push([
+					newCost,
+					v,
+					connected(u, v),
+					[...lineQueries, lineQuery],
+					newTime,
+				]);
 			}
 		}
 	}
-	const path = constructPath(start, end, cameFrom);
-
+	if (allLineQueries.length > 0) {
+		const path = [start];
+		for (const lineQuery of allLineQueries) {
+			path.push(lineQuery.line.target.id);
+		}
+		return {
+			cost: mrt.computeCostPaths(allLineQueries),
+			path,
+			edges: allLineQueries,
+		};
+	}
 	return {
-		cost: path.length - 1,
-		path,
+		cost: Infinity,
+		path: [],
+		edges: [],
 	};
 };
 
@@ -383,27 +401,26 @@ export const ksp = (
 	mrtMap: MRT,
 	start: StationID,
 	end: StationID,
-	K: number
+	K: number,
+	meta: {
+		startTime?: string;
+	}
 ) => {
-	const ksp = yenAlgorithm(mrtMap, start, end, K, {}, dijkstra);
+	const ksp = yenAlgorithm(mrtMap, start, end, K, meta, dijkstra);
 
 	const all: Route[] = [];
 
 	for (const sp of ksp) {
-		const instructions: Instruction[] = [];
-		for (let i = 1; i < sp.path.length; i++) {
-			const prevStation = sp.path[i - 1];
-			const currentStation = sp.path[i];
-			const lineId = constructLineId(prevStation, currentStation);
-			const line = mrtMap.lines[lineId];
-			instructions.push(
-				new InstructionLine(new LineQuery(line)).getInstruction()
-			);
-		}
 		all.push({
-			instructions,
+			instructions: sp.edges.map((lq) =>
+				new InstructionLine(lq).getInstruction()
+			),
+			durationMinute: sp.cost,
 			numberOfStops: sp.path.length - 1,
 			stops: sp.path,
+			arrivalTime: meta.startTime
+				? addMinutes(new Date(meta.startTime), sp.cost).toLocaleTimeString()
+				: undefined,
 		});
 	}
 	return all;
