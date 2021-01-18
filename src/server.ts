@@ -11,7 +11,7 @@ import { MyContext } from "./lib/context";
 
 export const startServer = async () => {
 	const app = express();
-	app.use(morgan("common"));
+	app.use(morgan("common", { skip: () => process.env.NODE_ENV === "test" }));
 	app.use(bodyParser.json());
 
 	app.get("/", (_req, res) => res.send("Hello World!"));
