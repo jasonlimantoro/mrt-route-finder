@@ -1,7 +1,7 @@
 import { Edge, EdgeQuery } from "@app/lib/graph";
 import { Station } from "./station";
 import { Instruction, StationType } from "./types";
-import { addMinutes, isNight, isPeak } from "./utils";
+import { isNight, isPeak } from "./utils";
 
 export abstract class Line extends Edge<Station> {
 	constructor(id: string, source: Station, target: Station) {
@@ -179,20 +179,6 @@ export class LineQuery extends EdgeQuery<Station, Line> {
 	constructor(line: Line, currentTime?: Date) {
 		super(line, currentTime);
 		this.line = line;
-	}
-
-	get endTime() {
-		if (this.currentTime) {
-			return addMinutes(this.currentTime, this.computeDuration());
-		}
-		return null;
-	}
-
-	computeDuration() {
-		if (this.currentTime) {
-			return this.line.computeDuration(this.currentTime);
-		}
-		return 1;
 	}
 
 	hasTargetOpened() {
