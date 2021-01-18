@@ -379,32 +379,3 @@ export const dijkstra = (
 		edges: [],
 	};
 };
-
-export const ksp = (
-	mrtMap: MRT,
-	start: StationID,
-	end: StationID,
-	K: number,
-	meta: {
-		startTime?: string;
-	}
-) => {
-	const ksp = yenAlgorithm(mrtMap, start, end, K, meta, dijkstra);
-
-	const all: Route[] = [];
-
-	for (const sp of ksp) {
-		all.push({
-			instructions: sp.edges.map((lq) =>
-				new InstructionLine(lq).getInstruction()
-			),
-			durationMinute: sp.cost,
-			numberOfStops: sp.path.length - 1,
-			stops: sp.path,
-			arrivalTime: meta.startTime
-				? addMinutes(new Date(meta.startTime), sp.cost).toLocaleTimeString()
-				: undefined,
-		});
-	}
-	return all;
-};
