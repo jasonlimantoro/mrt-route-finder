@@ -10,10 +10,10 @@ import {
 } from "type-graphql";
 import { Service } from "typedi";
 import { RouteService } from "./routes.service";
-import { RouteResponse, StationID, Route } from "./types";
+import { RouteResponseSuccess, StationID, Route, RouteResponse } from "./types";
 
 @Service()
-@Resolver(() => RouteResponse)
+@Resolver(() => RouteResponseSuccess)
 export class RouteResolver {
 	constructor(private readonly routeService: RouteService) {}
 	@Query(() => RouteResponse)
@@ -22,7 +22,12 @@ export class RouteResolver {
 		@Arg("target") target: StationID,
 		@Arg("startTime", { nullable: true }) startTime: string,
 		@Ctx() ctx: MyContext
-	): Promise<RouteResponse> {
+	): Promise<typeof RouteResponse> {
+		if (!ctx.mrt.routes[source] || !ctx.mrt.routes[target]) {
+			return {
+				message: "Destination or Source is not a valid station",
+			};
+		}
 		const allRoutes = this.routeService.recommendRoutes(
 			ctx.mrt,
 			source,
@@ -34,13 +39,13 @@ export class RouteResolver {
 		};
 	}
 	@FieldResolver(() => Route, { nullable: true })
-	topRoute(@Root() routeResponse: RouteResponse) {
+	topRoute(@Root() routeResponse: RouteResponseSuccess) {
 		return routeResponse.allRoutes[0];
 	}
 
 	@FieldResolver(() => [Route], { nullable: true })
 	alternativeRoutes(
-		@Root() routeResponse: RouteResponse,
+		@Root() routeResponse: RouteResponseSuccess,
 		@Arg("take", () => Int, { defaultValue: 2 }) take: number
 	) {
 		return routeResponse.allRoutes.slice(1, take + 1);

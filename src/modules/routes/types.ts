@@ -1,4 +1,4 @@
-import { Field, Int, ObjectType } from "type-graphql";
+import { createUnionType, Field, Int, ObjectType } from "type-graphql";
 import { Line } from "./line";
 
 export type Color = "red" | "green" | "yellow" | "blue" | "purple" | "brown";
@@ -253,7 +253,27 @@ export class Route {
 }
 
 @ObjectType()
-export class RouteResponse {
+export class RouteResponseSuccess {
 	@Field(() => [Route]!)
 	allRoutes: Route[];
 }
+
+@ObjectType()
+export class RouteResponseError {
+	@Field(() => String)
+	message: string;
+}
+
+export const RouteResponse = createUnionType({
+	name: "RouteResponse",
+	types: () => [RouteResponseSuccess, RouteResponseError] as const,
+	resolveType: (value) => {
+		if ("message" in value) {
+			return RouteResponseError;
+		}
+		if ("allRoutes" in value) {
+			return RouteResponseSuccess;
+		}
+		return undefined;
+	},
+});

@@ -15,9 +15,11 @@ describe("Top Route", () => {
 				source: "CC21"
 				target: "DT14"
 			) {
-				topRoute {
-					numberOfStops
-					stops
+				... on RouteResponseSuccess {
+					topRoute {
+						numberOfStops
+						stops
+					}
 				}
 			}
 		}
@@ -49,10 +51,12 @@ describe("Top Route", () => {
 				target: "DT12"
 				startTime: "2021-01-14T06:10+08:00"
 			) {
-				topRoute {
-					numberOfStops
-					stops
-					durationMinute
+				... on RouteResponseSuccess {
+					topRoute {
+						numberOfStops
+						stops
+						durationMinute
+					}
 				}
 			}
 		}
@@ -95,10 +99,12 @@ describe("Top Route", () => {
 						startTime: "2021-01-14T04:43+08:00"
 					)
 					{
-						topRoute {
-							durationMinute
-							numberOfStops
-							stops
+						... on RouteResponseSuccess {
+							topRoute {
+								durationMinute
+								numberOfStops
+								stops
+							}
 						}
 					}
 				}
@@ -144,10 +150,12 @@ describe("Top Route", () => {
 					startTime: "2021-01-14T00:00+08:00"
 				)
 				{
-					topRoute {
-						durationMinute
-						numberOfStops
-						stops
+					... on RouteResponseSuccess {
+						topRoute {
+							durationMinute
+							numberOfStops
+							stops
+						}
 					}
 				}
 			}
@@ -175,15 +183,17 @@ describe("Top Route", () => {
 					startTime: "2021-01-14T06:40+08:00"
 				)
 				{
-					topRoute {
-						durationMinute
-						numberOfStops
-						stops
-					}
-					alternativeRoutes {
-						stops
-						durationMinute
-						numberOfStops
+					... on RouteResponseSuccess {
+						topRoute {
+							durationMinute
+							numberOfStops
+							stops
+						}
+						alternativeRoutes {
+							stops
+							durationMinute
+							numberOfStops
+						}
 					}
 				}
 			}
