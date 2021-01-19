@@ -18,6 +18,9 @@ interface ShortestPath<Q> {
 
 export type ShortestPathAlgo<Q> = (...args: any[]) => ShortestPath<Q>;
 
+/**
+ * Dijkstra algorithm, agnostic of MRT, useful for testing yen's algorithm using simpler graph
+ */
 const vanilaDijkstra = <
 	E extends Edge<N>,
 	Q extends EdgeQuery<N, E>,
@@ -73,6 +76,132 @@ const vanilaDijkstra = <
 		edges: [],
 	};
 };
+
+/**
+ * @deprecated In favor of yen's algorithm.
+ * This algorithm is not pure Dijkstra; it will not stop even if a destination is found (in order to find multiple shortest path)
+ * However, this algorithm will find some non-sense paths if the both the source node and destination node lies on a "dead end" and there are
+ * some forbidden transitions (e.g. station is not operating) such that even the first shortest path found requires moving backwards first and then forwards.
+ * See Bedok to Changi test case in index.test.ts as an example.
+ */
+export const dijkstra2 = (
+	mrt: MRT,
+	start: StationID,
+	end: StationID,
+	startTime?: string
+): Route[] => {
+	type Pair = [number, StationID, LineQuery[], Date?];
+	interface Path {
+		routes: LineQuery[];
+		duration: number;
+	}
+	const startTimeObject = startTime ? new Date(startTime) : undefined;
+	const pq = new Heap<Pair>(
+		[[0, start, [], startTimeObject]],
+		(a, b) => a[0] < b[0]
+	);
+	const allPossiblePaths: Path[] = [];
+
+	const isVisited = (station: string, paths: LineQuery[]) => {
+		for (const p of paths) {
+			if (p.line.target.id === station || p.line.source.id === station) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	const find = (x: StationID) => {
+		let i = x;
+		const { interchanges } = mrt;
+		while (interchanges[i] !== i) {
+			i = interchanges[i] as StationID;
+		}
+		return i;
+	};
+
+	const connected = (x: StationID, y: StationID) => {
+		const { interchanges } = mrt;
+		if (!interchanges[x] || !interchanges[y]) return false;
+		const root1 = find(x);
+		const root2 = find(y);
+		return root1 === root2;
+	};
+
+	// It's hard to say what the upper bound is
+	// One idea: since this limits to only 5 shortest paths, then the worst complexity would be 5 * O(Dijkstra)
+	// O(Dijkstra) = O((M+N) log N), N is the number of vertices, M is the number of edges
+	// Though it is not tight bound, it's sufficient to find 5 paths
+	const MAX_BOUND = 5 * (mrt.numNodes + mrt.numEdges) * Math.log(mrt.numNodes);
+	let i = 0;
+	while (pq.length) {
+		i++;
+		if (i > MAX_BOUND) {
+			break;
+		}
+		const [distance, currentStation, pathsSoFar, currentTime] = pq.pop();
+		if (currentStation === end || connected(currentStation, end)) {
+			allPossiblePaths.push({ routes: pathsSoFar, duration: distance });
+			continue;
+		}
+		if (allPossiblePaths.length >= 5) {
+			break;
+		}
+		const lastLineQuery = pathsSoFar[pathsSoFar.length - 1];
+		for (const neighbor of mrt.routes[currentStation] || []) {
+			const line = mrt.getLine(currentStation, neighbor as StationID);
+			const lineQuery = new LineQuery(line, currentTime);
+			const cost = lineQuery.computeCost();
+			// Don't wait two times consecutively in station interchanges like Dhoby Ghout
+			if (
+				lastLineQuery?.line instanceof InterchangeLine &&
+				lineQuery.line instanceof InterchangeLine
+			) {
+				continue;
+			}
+
+			if (!lineQuery.hasTargetOpened()) {
+				continue;
+			}
+
+			if (!lineQuery.isOperating()) {
+				continue;
+			}
+
+			let newTime = currentTime ? addMinutes(currentTime, cost) : undefined;
+			if (!isVisited(neighbor, pathsSoFar)) {
+				const newCost = distance + cost;
+				pq.push([
+					newCost,
+					neighbor as StationID,
+					[...pathsSoFar, lineQuery],
+					newTime,
+				]);
+			}
+		}
+	}
+	const allPossiblePathsWithInstructions = allPossiblePaths.map(
+		({ routes, duration: durationMinute }) => {
+			return {
+				instructions: routes.map((lineQuery) =>
+					new InstructionLine(lineQuery).getInstruction()
+				),
+				stops: [start, ...routes.map((lineQuery) => lineQuery.line.target.id)],
+				durationMinute: startTimeObject ? durationMinute : undefined,
+				numberOfStops: routes.length,
+				arrivalTime: startTimeObject
+					? addMinutes(startTimeObject, durationMinute).toLocaleTimeString()
+					: undefined,
+			};
+		}
+	);
+	return allPossiblePathsWithInstructions;
+};
+
+/**
+ * Algorithm to compute loopless K shortest path
+ * Time Complexity: O(K * N * O(Dijkstra)), where O(Dijkstra) = O((M + N) log N)
+ */
 export const yenAlgorithm = <
 	E extends Edge<N>,
 	Q extends EdgeQuery<Node, E>,
@@ -165,121 +294,9 @@ export const yenAlgorithm = <
 	}
 	return ksp;
 };
-
-export const dijkstra2 = (
-	mrt: MRT,
-	start: StationID,
-	end: StationID,
-	startTime?: string
-): Route[] => {
-	type Pair = [number, StationID, LineQuery[], Date?];
-	interface Path {
-		routes: LineQuery[];
-		duration: number;
-	}
-	const startTimeObject = startTime ? new Date(startTime) : undefined;
-	const pq = new Heap<Pair>(
-		[[0, start, [], startTimeObject]],
-		(a, b) => a[0] < b[0]
-	);
-	const allPossiblePaths: Path[] = [];
-
-	const isVisited = (station: string, paths: LineQuery[]) => {
-		for (const p of paths) {
-			if (p.line.target.id === station || p.line.source.id === station) {
-				return true;
-			}
-		}
-		return false;
-	};
-
-	const find = (x: StationID) => {
-		let i = x;
-		const { interchanges } = mrt;
-		while (interchanges[i] !== i) {
-			i = interchanges[i] as StationID;
-		}
-		return i;
-	};
-
-	const connected = (x: StationID, y: StationID) => {
-		const { interchanges } = mrt;
-		if (!interchanges[x] || !interchanges[y]) return false;
-		const root1 = find(x);
-		const root2 = find(y);
-		return root1 === root2;
-	};
-
-	// It's hard to say what the upper bound is
-	// One idea: since this limits to only 5 shortest paths, then the worst complexity would be 5 * O(Dijkstra)
-	// O(Dijkstra) = O(V^2), V is the number of vertices
-	// Though it is not tight bound, it's sufficient to find 5 paths
-	const MAX_BOUND = 5 * 200 * 200;
-	let i = 0;
-	while (pq.length) {
-		i++;
-		if (i > MAX_BOUND) {
-			break;
-		}
-		const [distance, currentStation, pathsSoFar, currentTime] = pq.pop();
-		if (currentStation === end || connected(currentStation, end)) {
-			allPossiblePaths.push({ routes: pathsSoFar, duration: distance });
-			continue;
-		}
-		if (allPossiblePaths.length >= 5) {
-			break;
-		}
-		const lastLineQuery = pathsSoFar[pathsSoFar.length - 1];
-		for (const neighbor of mrt.routes[currentStation] || []) {
-			const line = mrt.getLine(currentStation, neighbor as StationID);
-			const lineQuery = new LineQuery(line, currentTime);
-			const cost = lineQuery.computeCost();
-			// Don't wait two times consecutively in station interchanges like Dhoby Ghout
-			if (
-				lastLineQuery?.line instanceof InterchangeLine &&
-				lineQuery.line instanceof InterchangeLine
-			) {
-				continue;
-			}
-
-			if (!lineQuery.hasTargetOpened()) {
-				continue;
-			}
-
-			if (!lineQuery.isOperating()) {
-				continue;
-			}
-
-			let newTime = currentTime ? addMinutes(currentTime, cost) : undefined;
-			if (!isVisited(neighbor, pathsSoFar)) {
-				const newCost = distance + cost;
-				pq.push([
-					newCost,
-					neighbor as StationID,
-					[...pathsSoFar, lineQuery],
-					newTime,
-				]);
-			}
-		}
-	}
-	const allPossiblePathsWithInstructions = allPossiblePaths.map(
-		({ routes, duration: durationMinute }) => {
-			return {
-				instructions: routes.map((lineQuery) =>
-					new InstructionLine(lineQuery).getInstruction()
-				),
-				stops: [start, ...routes.map((lineQuery) => lineQuery.line.target.id)],
-				durationMinute: startTimeObject ? durationMinute : undefined,
-				numberOfStops: routes.length,
-				arrivalTime: startTimeObject
-					? addMinutes(startTimeObject, durationMinute).toLocaleTimeString()
-					: undefined,
-			};
-		}
-	);
-	return allPossiblePathsWithInstructions;
-};
-
+/**
+ * MRT-aware Dijkstra
+ */
 export const dijkstra = (
 	mrt: MRT,
 	start: string,
