@@ -18,6 +18,15 @@ export const startServer = async () => {
 
 	const mrtMap = new MRT();
 	await mrtMap.init();
+	// eslint-disable-next-line no-console
+	console.log(
+		"Loaded:",
+		mrtMap.numNodes,
+		"nodes",
+		"and",
+		mrtMap.numEdges,
+		"edges"
+	);
 
 	const apolloServer = new ApolloServer({
 		schema: await createSchema(),

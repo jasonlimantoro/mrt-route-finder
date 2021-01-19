@@ -18,6 +18,12 @@ export abstract class Graph<
 		this.routes = routes;
 		this.edgeQuery = edgeQuery;
 	}
+	get numNodes() {
+		return Object.keys(this.nodes).length;
+	}
+	get numEdges() {
+		return Object.keys(this.edges).length;
+	}
 	addEdge(u: string, v: string) {
 		this.routes[u].push(v);
 	}
