@@ -1,5 +1,4 @@
 import { createUnionType, Field, Int, ObjectType } from "type-graphql";
-import { Line } from "./line";
 
 export type Color = "red" | "green" | "yellow" | "blue" | "purple" | "brown";
 export type StationType = "NS" | "EW" | "CC" | "CG" | "NE" | "CE" | "TE" | "DT";
@@ -191,24 +190,12 @@ export interface Mapping<V> {
 	[key: string]: V;
 }
 
-type StationMapping = {
-	[key in StationID]?: StationData;
-};
-
-type LineMapping = {
-	[key: string]: Line;
-};
-
 type InterChangeMapping = {
 	[key in StationID]?: StationID;
 };
 export interface MrtMap {
 	routes: Routes;
-	entities: {
-		stations: StationMapping;
-		lines: LineMapping;
-		interchanges: InterChangeMapping;
-	};
+	interchanges: InterChangeMapping;
 }
 
 @ObjectType()

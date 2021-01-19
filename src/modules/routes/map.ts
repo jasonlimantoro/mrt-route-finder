@@ -174,112 +174,108 @@ export const mrtMap: MrtMap = {
 		TE21: ["TE22", "TE20"],
 		TE22: ["TE21"],
 	},
-	entities: {
-		stations: {},
-		lines: {},
-		interchanges: {
-			// Dhoby Ghout
-			CC1: "NS24",
-			NE6: "NS24",
-			NS24: "NS24",
-			// JE
-			NS1: "NS1",
-			EW24: "EW24",
+	interchanges: {
+		// Dhoby Ghout
+		CC1: "NS24",
+		NE6: "NS24",
+		NS24: "NS24",
+		// JE
+		NS1: "NS1",
+		EW24: "EW24",
 
-			// Buona Vista
-			EW21: "EW21",
-			CC22: "EW21",
+		// Buona Vista
+		EW21: "EW21",
+		CC22: "EW21",
 
-			// Outram Park
-			EW16: "EW16",
-			NE3: "EW16",
-			TE17: "EW16",
+		// Outram Park
+		EW16: "EW16",
+		NE3: "EW16",
+		TE17: "EW16",
 
-			// HarbourFront
-			NE1: "NE1",
-			CC29: "NE1",
+		// HarbourFront
+		NE1: "NE1",
+		CC29: "NE1",
 
-			// China Town
-			NE4: "NE4",
-			DT19: "NE4",
+		// China Town
+		NE4: "NE4",
+		DT19: "NE4",
 
-			// Raffles Place
-			NS26: "NS26",
-			EW14: "NS26",
+		// Raffles Place
+		NS26: "NS26",
+		EW14: "NS26",
 
-			// City Hall
-			NS25: "NS25",
-			EW13: "NS25",
+		// City Hall
+		NS25: "NS25",
+		EW13: "NS25",
 
-			// Marina Bay
-			NS27: "NS27",
-			CE2: "NS27",
-			TE20: "NS27",
+		// Marina Bay
+		NS27: "NS27",
+		CE2: "NS27",
+		TE20: "NS27",
 
-			// Bayfront
-			CE1: "CE1",
-			DT16: "CE1",
+		// Bayfront
+		CE1: "CE1",
+		DT16: "CE1",
 
-			// Promenade
-			CC4: "CC4",
-			DT15: "CC4",
+		// Promenade
+		CC4: "CC4",
+		DT15: "CC4",
 
-			// Bugis
-			EW12: "EW12",
-			DT14: "EW12",
+		// Bugis
+		EW12: "EW12",
+		DT14: "EW12",
 
-			// Little india
-			NE7: "NE7",
-			DT12: "NE7",
+		// Little india
+		NE7: "NE7",
+		DT12: "NE7",
 
-			// Newton
-			NS21: "NS21",
-			DT11: "NS21",
+		// Newton
+		NS21: "NS21",
+		DT11: "NS21",
 
-			// Bishan
-			NS17: "NS17",
-			CC15: "NS17",
+		// Bishan
+		NS17: "NS17",
+		CC15: "NS17",
 
-			// Serangoon
-			NE12: "NE12",
-			CC13: "NE12",
+		// Serangoon
+		NE12: "NE12",
+		CC13: "NE12",
 
-			// Botanic Garden
-			CC19: "CC19",
-			DT9: "CC19",
+		// Botanic Garden
+		CC19: "CC19",
+		DT9: "CC19",
 
-			// Caldecott
-			TE9: "TE9",
-			CC17: "TE9",
+		// Caldecott
+		TE9: "TE9",
+		CC17: "TE9",
 
-			// Stevens
-			DT10: "DT10",
-			TE11: "DT10",
+		// Stevens
+		DT10: "DT10",
+		TE11: "DT10",
 
-			// Orchard
-			NS22: "NS22",
-			TE14: "NS22",
+		// Orchard
+		NS22: "NS22",
+		TE14: "NS22",
 
-			// Woodlands
-			NS9: "NS9",
-			TE2: "NS9",
+		// Woodlands
+		NS9: "NS9",
+		TE2: "NS9",
 
-			// Macpherson
-			CC10: "CC10",
-			DT26: "CC10",
+		// Macpherson
+		CC10: "CC10",
+		DT26: "CC10",
 
-			// Paya Lebar
-			EW8: "EW8",
-			CC9: "EW8",
+		// Paya Lebar
+		EW8: "EW8",
+		CC9: "EW8",
 
-			// Tampines
-			EW2: "EW2",
-			DT32: "EW2",
+		// Tampines
+		EW2: "EW2",
+		DT32: "EW2",
 
-			// Expo
-			CG1: "CG1",
-			DT35: "DT35",
-		},
+		// Expo
+		CG1: "CG1",
+		DT35: "DT35",
 	},
 };
 
@@ -288,7 +284,7 @@ export class MRT extends Graph<Line, LineQuery, Station> {
 
 	constructor(
 		routes: Mapping<string[]> = mrtMap.routes,
-		interChanges: Mapping<string | undefined> = mrtMap.entities.interchanges
+		interChanges: Mapping<string | undefined> = mrtMap.interchanges
 	) {
 		super(routes, LineQuery);
 		this.interchanges = interChanges;
