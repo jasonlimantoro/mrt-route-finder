@@ -217,6 +217,9 @@ export const yenAlgorithm = <
 	const ksp: ShortestPath<Q>[] = [];
 	const candidates = new Heap<ShortestPath<Q>>([], (a, b) => a.cost < b.cost);
 	const { path, cost, edges } = shortestPathAlgorithm(graph, start, end, meta);
+	if (path.length === 0) {
+		return ksp;
+	}
 	ksp[0] = { path, cost, edges };
 	for (let k = 1; k < K; k++) {
 		// find the cut (a.k.a spur node)

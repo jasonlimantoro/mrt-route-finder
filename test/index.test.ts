@@ -157,18 +157,19 @@ describe("Top Route", () => {
 							stops
 						}
 					}
+					... on RouteResponseError {
+						message
+					}
 				}
 			}
 			`,
 			})
 			.expect(200);
-		expect(response.body.data.route.topRoute).toMatchInlineSnapshot(`
+		expect(response.body.data.route).toMatchInlineSnapshot(`
 		Object {
-		  "durationMinute": null,
-		  "numberOfStops": -1,
-		  "stops": Array [],
+		  "message": "No path found from EW5 to CG2",
 		}
-		`);
+	`);
 	});
 
 	it("Outram Park to Somerset: prefer EW to NE line during peak hours", async () => {

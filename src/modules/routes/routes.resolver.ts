@@ -34,6 +34,11 @@ export class RouteResolver {
 			target,
 			startTime
 		);
+		if (allRoutes.length === 0) {
+			return {
+				message: `No path found from ${source} to ${target}`,
+			};
+		}
 		return {
 			allRoutes,
 		};
