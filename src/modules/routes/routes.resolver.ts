@@ -18,9 +18,9 @@ export class RouteResolver {
 	constructor(private readonly routeService: RouteService) {}
 	@Query(() => RouteResponse)
 	async route(
-		@Arg("source") source: StationID,
-		@Arg("target") target: StationID,
-		@Arg("startTime", { nullable: true }) startTime: string,
+		@Arg("source", () => String) source: StationID,
+		@Arg("target", () => String) target: StationID,
+		@Arg("startTime", () => String, { nullable: true }) startTime: string,
 		@Ctx() ctx: MyContext
 	): Promise<typeof RouteResponse> {
 		if (!ctx.mrt.routes[source] || !ctx.mrt.routes[target]) {
