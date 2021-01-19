@@ -32,7 +32,13 @@ yarn start
 
 > This will start server at http://localhost:4000
 
-3. Navigate to http://localhost:4000/graphql to access the GraphQL playground
+If port 4000 is not available, then just specify your port
+
+```
+PORT=5001 yarn start
+```
+
+3. Navigate to http://localhost:[PORT]/graphql to access the GraphQL playground
 
 ## How To's
 
@@ -171,4 +177,12 @@ yarn start
 
 ```
 yarn test
+```
+
+## Production
+
+1. Run build
+
+```
+yarn build
 ```
