@@ -241,7 +241,6 @@ export class Route {
 
 @ObjectType()
 export class RouteResponseSuccess {
-	@Field(() => [Route]!)
 	allRoutes: Route[];
 }
 
