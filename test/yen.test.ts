@@ -17,7 +17,7 @@ class CustomQueryEdge extends EdgeQuery<CustomNode, Edge<CustomNode>> {
 	}
 }
 
-class CustomGraph extends Graph<Edge<CustomNode>, CustomQueryEdge, CustomNode> {
+class CustomGraph extends Graph<CustomEdge, CustomQueryEdge, CustomNode> {
 	constructor(routes: { [key: string]: string[] }) {
 		super(routes, CustomQueryEdge);
 		this.init();
