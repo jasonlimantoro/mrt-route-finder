@@ -37,6 +37,7 @@ export const startServer = async () => {
 				"prettier.printWidth": "60",
 			} as any,
 		},
+		introspection: true,
 	});
 	apolloServer.applyMiddleware({ app });
 
