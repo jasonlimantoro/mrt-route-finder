@@ -1,5 +1,7 @@
 # MRT Route Finder
 
+### This project is available at https://mrt-route-finder.herokuapp.com/graphql
+
 ![](assets/demo.gif)
 
 ## Tech stack
