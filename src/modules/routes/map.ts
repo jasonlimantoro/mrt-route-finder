@@ -50,7 +50,7 @@ export const mrtMap: MrtMap = {
 		NS24: ["NS25", "NS23", "NE6", "CC1"],
 		NS23: ["NS24", "NS22"],
 		NS22: ["NS23", "NS21"],
-		NS21: ["NS22", "NS20"],
+		NS21: ["NS22", "NS20", "DT11"],
 		NS20: ["NS21", "NS19"],
 		NS19: ["NS20", "NS18"],
 		NS18: ["NS19", "NS17"],
